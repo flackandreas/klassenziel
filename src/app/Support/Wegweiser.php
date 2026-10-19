@@ -40,6 +40,7 @@ final class Wegweiser
         '#^/vorfaelle/(?<id>[1-9][0-9]{0,8})$#' => 'vorfall.php',
         '#^/import/(?<id>[1-9][0-9]{0,8})$#' => 'import_vorschau.php',
         '#^/klassenziel/(?<token>[A-Za-z0-9_-]{1,64})$#' => 'anzeige.php',
+        '#^/klassenziel/(?<token>[A-Za-z0-9_-]{1,64})/stand\.json$#' => 'anzeige_daten.php',
     ];
 
     /**

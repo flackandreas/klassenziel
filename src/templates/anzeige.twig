@@ -1,0 +1,134 @@
+{#
+  Die oeffentliche Klassenseite (Planung, Abschnitt 8, Variante A "Health-Balken").
+
+  Ein Dokument fuer beide Layouts: Das Stylesheet ordnet dieselben Bausteine
+  fuer den Beamer (?ansicht=beamer oder grosser Bildschirm) und fuer das Handy
+  an. Alles steht auch ohne JavaScript da; das Skript animiert nur den Balken,
+  aktualisiert alle fuenf Minuten und laedt weitere Eintraege nach.
+
+  Daten nur aus Anzeigedaten - dort steht die abschliessende Feldliste.
+#}
+{%- set a = anzeige -%}
+{%- set c = a.countdown -%}
+<!DOCTYPE html>
+<html lang="de" class="anzeige-dokument{% if beamer %} anzeige-dokument--beamer{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <meta name="color-scheme" content="light">
+    <title>{{ a.klasse.name }} · Unser Ziel: {{ a.klasse.belohnung }}</title>
+    <link rel="stylesheet" href="{{ datei('/css/schriften.css') }}">
+    <link rel="stylesheet" href="{{ datei('/css/anzeige.css') }}">
+    {# Beamer-Layout: fest mit ?ansicht=beamer, sonst fuer grosse Bildschirme im Querformat. #}
+    <link rel="stylesheet" href="{{ datei('/css/anzeige-beamer.css') }}"{% if not beamer %} media="(min-width: 64em) and (min-height: 35em) and (orientation: landscape)"{% endif %}>
+    <link rel="icon" href="{{ datei('/favicon.svg') }}" type="image/svg+xml">
+    <script src="{{ datei('/js/anzeige.js') }}" defer></script>
+</head>
+<body class="anzeige{% if beamer %} anzeige--beamer{% endif %}"
+      data-stand="{{ a.stand }}" data-ziel="{{ a.ziel }}" data-merker="{{ merker }}" data-anzahl="{{ anzahl }}">
+<main class="anzeige__raster">
+
+    <header class="anzeige__kopf">
+        <p class="anzeige__ueberzeile">{{ a.klasse.name }} · Schuljahr {{ a.klasse.schuljahr }}</p>
+        <h1 class="anzeige__titel"><span class="nur-beamer">Unser </span>Ziel: <span data-feld="belohnung">{{ a.klasse.belohnung }}</span></h1>
+    </header>
+
+    <section class="anzeige__countdown" aria-label="Countdown bis zum Stichtag" data-feld="countdown">
+        {% if c.zustand == 'laeuft' %}
+            <p class="countdown__vor">noch</p>
+            <p class="countdown__zahl">{{ c.tage }} {{ c.tage == 1 ? 'Tag' : 'Tage' }}</p>
+            <p class="countdown__nach">bis zum Stichtag {{ c.stichtag }}</p>
+        {% elseif c.zustand == 'heute' %}
+            <p class="countdown__vor">&nbsp;</p>
+            <p class="countdown__zahl">Heute</p>
+            <p class="countdown__nach">ist der Stichtag ({{ c.stichtag }})</p>
+        {% elseif c.zustand == 'erreicht' %}
+            <p class="countdown__vor">&nbsp;</p>
+            <p class="countdown__zahl countdown__zahl--text">Stichtag erreicht</p>
+            <p class="countdown__nach">{{ c.stichtag }}</p>
+        {% else %}
+            <p class="countdown__vor">&nbsp;</p>
+            <p class="countdown__zahl countdown__zahl--text">Stichtag folgt</p>
+            <p class="countdown__nach">&nbsp;</p>
+        {% endif %}
+    </section>
+
+    <section class="anzeige__stand karte" aria-label="Punktestand">
+        <div class="stand">
+            <p class="stand__wert">
+                <span class="stand__zahl" data-feld="stand">{{ a.stand }}</span>
+                <span class="stand__von nur-beamer">von 100 Punkten</span>
+                <span class="stand__von nur-handy">/ 100 Punkte</span>
+            </p>
+            <p class="stand__ziel nur-handy">Ziel {{ a.ziel }}</p>
+            <p class="stand__status{% if a.ziel_erreicht %} stand__status--erreicht{% endif %}" data-feld="status">
+                {% if a.ziel_erreicht %}Ziel erreicht – jetzt halten!{% else %}Noch {{ a.fehlt }} {{ a.fehlt == 1 ? 'Punkt' : 'Punkte' }} bis zum Ziel{% endif %}
+            </p>
+        </div>
+
+        <div class="balken" role="img" aria-label="{{ a.stand }} von 100 Punkten, Ziel {{ a.ziel }}" data-feld="balken">
+            <div class="balken__spur">
+                <div class="balken__fuellung fuellung--{{ a.stand }}" data-feld="fuellung"></div>
+                <div class="balken__segmente" aria-hidden="true"></div>
+            </div>
+            <div class="balken__ziel ziel--{{ a.ziel }}" aria-hidden="true"></div>
+        </div>
+        <div class="skala" aria-hidden="true">
+            <span class="skala__wert skala__wert--links">0</span>
+            <span class="skala__ziel ziel--{{ a.ziel }}">Ziel: {{ a.ziel }}</span>
+            <span class="skala__wert skala__wert--rechts">100</span>
+        </div>
+    </section>
+
+    <section class="anzeige__woche karte" aria-labelledby="titel-woche">
+        <h2 id="titel-woche" class="kartentitel">Diese Woche</h2>
+        <p class="woche__bilanz" data-feld="woche-bilanz">{{ a.woche.bilanz_text }} {{ a.woche.bilanz in [1, -1] ? 'Punkt' : 'Punkte' }}</p>
+        <p class="woche__zahlen" data-feld="woche-zahlen">{{ a.woche.positiv }} positive, {{ a.woche.negativ }} negative Einträge</p>
+    </section>
+
+    <section class="anzeige__eintraege karte" aria-labelledby="titel-eintraege">
+        <div class="eintraege__kopf">
+            <h2 id="titel-eintraege" class="kartentitel">Letzte Einträge aus dem Klassenbuch</h2>
+            <span class="eintraege__hinweis">ohne Namen</span>
+        </div>
+        <ol class="eintraege" data-feld="eintraege">
+        {% for e in a.eintraege %}
+            <li class="eintrag eintrag--{{ e.art }}">
+                <span class="eintrag__datum">{{ e.datum_text }}</span>
+                <span class="eintrag__fach">{{ e.fach }}</span>
+                <span class="eintrag__meta nur-handy">{{ e.datum_text }}{% if e.fach %} · {{ e.fach }}{% endif %}{% if e.stufe %} · {{ e.stufe }}{% endif %}</span>
+                <span class="eintrag__text">{{ e.text }}</span>
+                <span class="abzeichen abzeichen--{{ e.punkte >= 0 ? 'positiv' : 'negativ' }}">{{ e.punkte_text }}{% if e.stufe %} · {{ e.stufe }}{% endif %}</span>
+            </li>
+        {% else %}
+            <li class="eintrag eintrag--leer">Noch keine Einträge.</li>
+        {% endfor %}
+        </ol>
+        {% if a.weitere and not beamer %}
+            <a class="eintraege__mehr nur-handy" href="?eintraege={{ anzahl + 20 }}" data-versatz="{{ a.eintraege|length }}">Weitere laden</a>
+        {% endif %}
+    </section>
+
+    <section class="anzeige__wertung karte" aria-labelledby="titel-wertung">
+        <h2 id="titel-wertung" class="kartentitel">So wird gewertet</h2>
+        <p class="wertung__stufen" data-feld="wertung">
+            klein {{ a.wertung.klein }} · mittel {{ a.wertung.mittel }} · groß {{ a.wertung.gross }} Punkte
+        </p>
+        <p class="wertung__bonus" data-feld="bonus">
+            {% if a.wertung.wochenbonus > 0 %}+{{ a.wertung.wochenbonus }} für jede Schulwoche ohne großen Eintrag{% else %}kein Wochenbonus{% endif %}
+        </p>
+    </section>
+
+    <p class="anzeige__quelle nur-beamer" data-feld="quelle">
+        {% if a.quelle %}Quelle: WebUntis-Export vom {{ a.quelle }}{% else %}Noch kein Export eingelesen{% endif %}
+    </p>
+
+    <footer class="anzeige__fuss nur-handy">
+        Nur lesen · Einträge ohne Namen · Stand: {% if a.quelle %}Export vom <span data-feld="quelle-kurz">{{ a.quelle }}</span>{% else %}noch kein Export{% endif %}
+        · <a href="/datenschutz">Hinweise zum Datenschutz</a>
+    </footer>
+</main>
+</body>
+</html>

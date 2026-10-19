@@ -53,7 +53,9 @@ final class Kern
 
         $wurzel = dirname(__DIR__, 2);
 
-        return self::$eine = new self($wurzel, $wurzel . '/storage');
+        // KLASSENZIEL_ABLAGE nur fuer die Tests: ihr Server soll den
+        // Zwischenspeicher der Entwicklungsinstanz nicht beruehren.
+        return self::$eine = new self($wurzel, (string) umgebung('KLASSENZIEL_ABLAGE', $wurzel . '/storage'));
     }
 
     /** Nur fuer Tests. */
@@ -98,6 +100,11 @@ final class Kern
     public function standdienst(): Standdienst
     {
         return new Standdienst($this->db(), $this->ablage);
+    }
+
+    public function anzeigedienst(): \Klassenziel\Anzeige\Anzeigedienst
+    {
+        return new \Klassenziel\Anzeige\Anzeigedienst($this->db(), $this->standdienst());
     }
 
     public function einstellungen(): Einstellungen

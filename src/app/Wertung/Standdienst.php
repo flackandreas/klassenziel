@@ -131,7 +131,11 @@ final class Standdienst
         $abfrage = $this->verbindung->query('SELECT version FROM vorgaben WHERE id = 1');
         $schulstand = $abfrage !== false ? (int) $abfrage->fetchColumn() : 0;
 
+        // Mit der Datenbank: Entwicklung und Tests teilen sich im Container
+        // dieselbe Ablage, und Klasse 1 der einen ist nicht Klasse 1 der anderen.
         $schluessel = hash('sha256', implode('|', [
+            (string) umgebung('DB_HOST', ''),
+            (string) umgebung('DB_NAME', ''),
             $klasse->id,
             $klasse->datenVersion,
             $schulstand,

@@ -1,0 +1,42 @@
+/*
+ * Schriften, selbst ausgeliefert.
+ *
+ * Kein Google-Fonts-CDN: sonst ginge die IP-Adresse jedes Schuelers und
+ * jedes Elternteils, das die Klassenseite oeffnet, an Google (DSGVO). Die
+ * Dateien stammen aus den Fontsource-Paketen 5.3.0, Teilmenge "latin" -
+ * sie enthaelt die Umlaute, das ß und das typografische Minus (U+2212).
+ * Beide Schriften stehen unter der SIL Open Font License 1.1; die
+ * Lizenztexte liegen daneben.
+ */
+
+@font-face {
+    font-family: 'Atkinson Hyperlegible';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Atkinson Hyperlegible';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/bricolage-grotesque-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/bricolage-grotesque-latin-700-normal.woff2') format('woff2');
+}

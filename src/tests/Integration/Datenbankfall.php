@@ -51,6 +51,7 @@ abstract class Datenbankfall extends TestCase
 
         Datenbank::setzeVerbindung(self::$db);
         Kern::zuruecksetzen();
+        self::leereTestablage();
     }
 
     protected function tearDown(): void
@@ -100,8 +101,27 @@ abstract class Datenbankfall extends TestCase
             'APP_URL' => 'http://127.0.0.1',
             'AUTO_MIGRATE' => '0',
             'TRUSTED_PROXIES' => '',
+            'KLASSENZIEL_ABLAGE' => self::testablage(),
             'PATH' => (string) getenv('PATH'),
         ];
+    }
+
+    /** Ablage des Testservers - getrennt von der der Entwicklungsinstanz. */
+    protected static function testablage(): string
+    {
+        return sys_get_temp_dir() . '/klassenziel-testserver-ablage';
+    }
+
+    /**
+     * Leert den Zwischenspeicher des Testservers. Jeder Test beginnt mit
+     * einer leeren Datenbank; Klasse 1 eines Tests ist nicht Klasse 1 des
+     * naechsten.
+     */
+    protected static function leereTestablage(): void
+    {
+        foreach (glob(self::testablage() . '/cache/stand/*') ?: [] as $datei) {
+            @unlink($datei);
+        }
     }
 
     private static function leeren(PDO $db): void

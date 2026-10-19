@@ -3,58 +3,33 @@
 declare(strict_types=1);
 
 /**
- * Die oeffentliche Klassenseite hinter dem geheimen Link.
+ * Die oeffentliche Klassenseite hinter dem geheimen Link: der Health-Balken.
  *
- * Phase 1: Zugang, Ratenbremse, Schutzkoepfe und das gemeinsame 404 stehen;
- * der Health-Balken folgt in Phase 4.
- *
- * Keine Sitzung, kein Cookie. Wer die Seite oeffnet, hinterlaesst nur einen
- * Zaehler in der Ratenbremse - unter dem Hash seiner Adresse.
+ * ?ansicht=beamer erzwingt das Beamer-Layout (1280x720 bis 1920x1080, ohne
+ * Scrollen). Ohne Parameter waehlt das Stylesheet nach der Bildschirmgroesse.
+ * ?eintraege=40 zeigt mehr Eintraege - der Weg fuer "Weitere laden" ohne
+ * JavaScript.
  */
 
-use Klassenziel\Support\Anfrage;
+use Klassenziel\Anzeige\Anzeigedaten;
+use Klassenziel\Anzeige\Zugang;
 use Klassenziel\Support\Kern;
 
 /** @var Kern $kern */
 
-header('X-Robots-Tag: noindex, nofollow');
-// Der Link soll nicht als Referrer an eine andere Seite gehen, auch nicht an
-// eine eigene: im Zugriffsprotokoll stuende er dann im Klartext.
-header('Referrer-Policy: no-referrer');
-header('Cache-Control: no-store');
+$klasse = Zugang::klasse($kern);
 
-$bremse = $kern->ratenbremse();
-$absender = Anfrage::absender();
+$beamer = ($_GET['ansicht'] ?? '') === 'beamer';
+$anzahl = $beamer
+    ? Anzeigedaten::EINTRAEGE_BEAMER
+    : Zugang::zahl('eintraege', Anzeigedaten::EINTRAEGE_HANDY, 1, Anzeigedaten::EINTRAEGE_HOECHSTENS);
 
-// Die Zaehler sollen nach einem Tag weg sein (so steht es in den
-// Datenschutzhinweisen). Ohne eigenen Zeitplan: gelegentlich hier.
-if (random_int(1, 200) === 1) {
-    $bremse->raeumeAuf();
-}
-
-// Grosszuegig: im Schul-WLAN teilt sich eine ganze Klasse eine Adresse.
-$anzeigeGrenze = 600;
-$anzeigeFenster = 600;
-// Fehlversuche mit unbekanntem Link: wer hier dreissigmal danebenliegt, sucht.
-$fehlversuchGrenze = 30;
-$fehlversuchFenster = 3600;
-
-if ($bremse->ueberschritten('fehlversuch', $absender, $fehlversuchGrenze, $fehlversuchFenster)
-    || !$bremse->erlaubt('anzeige', $absender, $anzeigeGrenze, $anzeigeFenster)) {
-    http_response_code(429);
-    header('Retry-After: 600');
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "Zu viele Anfragen. Bitte in einigen Minuten noch einmal versuchen.\n";
-    exit;
-}
-
-$klasse = $kern->klassen()->nachLink($kern->parameter('token'));
-
-if ($klasse === null) {
-    $bremse->erlaubt('fehlversuch', $absender, $fehlversuchGrenze, $fehlversuchFenster);
-    Kern::nichtGefunden();
-}
-
-$kern->zeichneOeffentlich('anzeige_vorlaeufig.twig', [
-    'klasse' => $klasse,
+$kern->zeichneOeffentlich('anzeige.twig', [
+    'anzeige' => $kern->anzeigedienst()->fuer($klasse, new DateTimeImmutable('today'), $anzahl),
+    'beamer' => $beamer,
+    'anzahl' => $anzahl,
+    // Fuer die Animation "vom alten zum neuen Wert": unter diesem Merker
+    // legt das Geraet den zuletzt gesehenen Stand ab. Die Kennung der
+    // Klasse ist kein Geheimnis; der Link waere eines.
+    'merker' => 'klassenziel-' . $klasse->id,
 ]);

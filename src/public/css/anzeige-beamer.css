@@ -1,0 +1,107 @@
+/*
+ * Beamer-Layout der Klassenseite (Referenz 1280x720, sauber bis 1920x1080,
+ * ohne Scrollen).
+ *
+ * Geladen mit media="all" bei ?ansicht=beamer, sonst mit einer Medienabfrage
+ * fuer grosse, nicht zu schmale Bildschirme. Alle Masse in rem; die
+ * Grundgroesse waechst mit dem Bildschirm: 16 px bei 1280x720, 24 px bei
+ * 1920x1080 - die kleinste Schrift bleibt so bei 16 px.
+ */
+
+html { font-size: min(1.25vw, 2.2223vh); }
+
+body { height: 100vh; overflow: hidden; }
+
+.nur-beamer { display: initial; }
+.nur-handy { display: none !important; }
+
+.anzeige__raster {
+    max-width: none;
+    height: 100vh;
+    padding: 1.5rem 2.5rem;
+    gap: 1rem 1.5rem;
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+        "kopf countdown"
+        "stand stand"
+        "eintraege woche"
+        "eintraege wertung"
+        "eintraege quelle";
+}
+
+.karte { padding: 1rem 1.5rem; }
+.kartentitel { font-size: 1.1rem; }
+
+/* --- Kopf --- */
+
+.anzeige__kopf { padding: 0; align-self: center; }
+.anzeige__ueberzeile { font-size: 1rem; }
+.anzeige__titel {
+    font-size: 2.4rem;
+    margin-top: .3rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- Countdown --- */
+
+.anzeige__countdown { padding: .8rem 1.5rem; }
+.countdown__vor, .countdown__nach { font-size: 1rem; line-height: 1.25; }
+.countdown__zahl { font-size: 2.5rem; margin: .05rem 0; }
+.countdown__zahl--text { font-size: 2rem; }
+
+/* --- Punktestand --- */
+
+.anzeige__stand { padding: 1rem 1.75rem .75rem; }
+.stand { flex-wrap: nowrap; }
+.stand__zahl { font-size: 3.6rem; }
+.stand__von { font-size: 1.35rem; }
+.stand__status { flex-basis: auto; order: 0; margin-top: 0; font-size: 1.35rem; }
+
+.balken { margin-top: 1.1rem; }
+.balken__spur { height: 4.5rem; }
+.balken__ziel { top: -.625rem; bottom: -.625rem; }
+
+.skala { height: 1.5rem; margin-top: .7rem; font-size: 1.05rem; }
+
+/* --- Eintraege --- */
+
+.anzeige__eintraege { display: flex; flex-direction: column; min-height: 0; }
+.eintraege__hinweis { font-size: 1rem; }
+.eintraege { margin-top: .4rem; overflow: hidden; }
+
+.eintrag {
+    grid-template-columns: 4rem 9rem minmax(0, 1fr) auto;
+    grid-template-areas: "datum fach text abzeichen";
+    gap: 0 1rem;
+    padding: .45rem 0;
+    font-size: 1.1rem;
+}
+/* Am Beamer die fuenf neuesten, mehr passen nicht ohne Scrollen. */
+.eintrag:nth-child(n + 6) { display: none; }
+
+.eintrag__datum { display: block; grid-area: datum; color: var(--text-leise); font-variant-numeric: tabular-nums; }
+.eintrag__fach {
+    display: block;
+    grid-area: fach;
+    color: var(--text-leise);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.eintrag__text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eintrag--wochenbonus .eintrag__fach { display: none; }
+.eintrag--wochenbonus .eintrag__text { grid-column: fach / abzeichen; }
+.abzeichen { font-size: 1rem; padding: .2rem .8rem; }
+
+/* --- Rechte Spalte --- */
+
+.woche__bilanz { font-size: 2.1rem; line-height: 1.15; }
+.woche__zahlen { font-size: 1rem; }
+.wertung__stufen { font-size: 1.1rem; }
+.wertung__bonus { font-size: 1rem; }
+
+.anzeige__quelle { align-self: end; font-size: 1rem; }

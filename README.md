@@ -9,15 +9,16 @@ Die Einträge erscheinen dort ohne Namen.
 Datenquelle ist der wöchentliche CSV-Export aus WebUntis, den die Klassenlehrkraft
 hochlädt.
 
-> **Stand:** Phase 3 von 5. Fertig sind:
+> **Stand:** Phase 4 von 5. Fertig sind:
 >
 > - Gerüst, Datenmodell, Anmeldung über das Portal
 > - Klassenverwaltung und geheimer Link
 > - Import des WebUntis-Exports
 > - Prüfliste, Gewichtung mit Simulation, Wochenbonus und Ferien
+> - öffentliche Anzeige für Beamer und Handy
 >
-> Es folgen die öffentliche Anzeige (Beamer und Handy) sowie Datenschutz und
-> Betrieb; der Plan steht in [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
+> Es folgen Datenschutz-Tests und Betrieb auf dem Mac mini; der Plan steht in
+> [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
 
 ---
 
@@ -116,6 +117,28 @@ damit von selbst ungültig.
   Gespeichert wird nur, was in der Vorschau zu sehen war: Der Knopf trägt eine
   Prüfsumme der simulierten Werte.
 
+### Öffentliche Anzeige
+
+- **Beamer** (Referenz 1280×720, bis 1920×1080, ohne Scrollen): Alle Maße in
+  rem, die Grundschrift wächst mit dem Bildschirm, von 16 px auf 24 px. Gezeigt
+  werden die fünf neuesten Einträge. Das Layout steht in `anzeige-beamer.css`.
+  Es wird mit `?ansicht=beamer` fest geladen, sonst für große Bildschirme im
+  Querformat.
+- **Handy** (Referenz 390×844): Stand mit 28-px-Balken, Countdown und
+  Wochenbilanz als Kacheln, 20 Einträge und „Weitere laden“. Ohne JavaScript ist
+  „Weitere laden“ ein Link.
+- Alles kommt aus `Anzeige/Anzeigedaten` mit fester Feldliste:
+  - Datum, Fach (Klartext), freigegebener Kurztext oder die Bezeichnung der Kategorie
+  - Punkte mit typografischem Minus (U+2212), Stufe
+  - der Wochenbonus als eigener Eintrag
+- Kein `style`-Attribut. Füllung und Zielmarke kommen über die Klassen
+  `.fuellung--0…100` und `.ziel--0…100`. Das Skript animiert nur über CSSOM, vom
+  zuletzt auf diesem Gerät gesehenen Stand aus (localStorage); mit
+  `prefers-reduced-motion` gibt es keine Animation.
+- Schriften selbst ausgeliefert: Bricolage Grotesque 600/700 und Atkinson
+  Hyperlegible 400/700 aus Fontsource 5.3.0, unter der SIL OFL 1.1. Die
+  Lizenztexte liegen in `public/fonts/`.
+
 **Der Schlüssel `KLASSENZIEL_SCHLUESSEL` gehört in die Sicherung.** Ohne ihn
 sind die Originaltexte unlesbar, alle Links müssen neu erzeugt werden, und die
 Fingerabdrücke der Exportzeilen passen nicht mehr. Für diesen Fall liegt ein
@@ -167,7 +190,8 @@ mit dem eingebauten Server von PHP. Ohne `TEST_DB_NAME` werden sie übersprungen
 
 | Route | |
 |---|---|
-| `/klassenziel/{link}` | öffentliche Klassenseite (ab Phase 4 mit dem Health-Balken) |
+| `/klassenziel/{link}` | öffentliche Klassenseite mit dem Health-Balken; `?ansicht=beamer` erzwingt das Beamer-Layout, `?eintraege=40` zeigt mehr Einträge |
+| `/klassenziel/{link}/stand.json` | dieselben Daten als JSON (`anzahl`, `versatz`), für die Aktualisierung alle 5 Minuten |
 | `/datenschutz` | Hinweise zum Datenschutz (Platzhalter) |
 | `/` | meine Klassen |
 | `/klassen/neu`, `/klassen/{id}` | anlegen, bearbeiten, Link, Zuständigkeit, archivieren |
