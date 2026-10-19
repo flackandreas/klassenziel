@@ -100,6 +100,13 @@ final class OeffentlicheAnzeigeTest extends Datenbankfall
         self::assertStringContainsString('fuellung--57', $html);
         self::assertStringContainsString('ziel--70', $html);
         self::assertStringContainsString('Noch 13 Punkte bis zum Ziel', $html);
+        // Etappen bei 18, 35, 53 und 70: drei erreicht, Stufe 3.
+        self::assertStringContainsString('stimmung--3', $html);
+        self::assertStringContainsString('Auf der Zielgeraden!', $html);
+        self::assertSame(4, substr_count($html, 'class="etappe '));
+        self::assertSame(3, substr_count($html, 'etappe--erreicht'));
+        self::assertStringContainsString('class="etappe ziel--53 etappe--erreicht" data-bei="53"', $html);
+        self::assertStringContainsString('class="etappe ziel--70" data-bei="70"', $html);
         self::assertStringContainsString('Unterrichtsstörung', $html);
         self::assertStringContainsString('Gute Mitarbeit', $html);
         self::assertStringContainsString('Großer negativer Eintrag', $html);

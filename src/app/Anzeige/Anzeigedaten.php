@@ -69,6 +69,7 @@ final class Anzeigedaten
             'ziel' => $klasse->zielwert,
             'fehlt' => $fehlt,
             'ziel_erreicht' => $wertung->stand >= $klasse->zielwert,
+            'stimmung' => Stimmung::fuer($wertung->stand, $klasse->zielwert),
             'countdown' => Countdown::fuer($klasse->stichtag, $heute),
             'woche' => [
                 'bilanz' => $wertung->wochenbilanz,

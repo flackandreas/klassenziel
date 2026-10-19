@@ -8,8 +8,10 @@
 
   Daten nur aus Anzeigedaten - dort steht die abschliessende Feldliste.
 #}
+{%- import '_gesicht.twig' as g -%}
 {%- set a = anzeige -%}
 {%- set c = a.countdown -%}
+{%- set s = a.stimmung -%}
 <!DOCTYPE html>
 <html lang="de" class="anzeige-dokument{% if beamer %} anzeige-dokument--beamer{% endif %}">
 <head>
@@ -57,23 +59,35 @@
 
     <section class="anzeige__stand karte" aria-label="Punktestand">
         <div class="stand">
+            {# Alle fuenf Gesichter, sichtbar ist das der Stufe - so kann das
+               Skript die Stufe wechseln, ohne Markup zu bauen. #}
+            <span class="stand__gesicht stimmung--{{ s.stufe }}" data-feld="gesicht" aria-hidden="true">
+                {%- for n in 0..4 %}{{ g.gesicht(n, 'gesicht--' ~ n) }}{% endfor -%}
+            </span>
             <p class="stand__wert">
                 <span class="stand__zahl" data-feld="stand">{{ a.stand }}</span>
                 <span class="stand__von nur-beamer">von 100 Punkten</span>
                 <span class="stand__von nur-handy">/ 100 Punkte</span>
             </p>
             <p class="stand__ziel nur-handy">Ziel {{ a.ziel }}</p>
-            <p class="stand__status{% if a.ziel_erreicht %} stand__status--erreicht{% endif %}" data-feld="status">
-                {% if a.ziel_erreicht %}Ziel erreicht – jetzt halten!{% else %}Noch {{ a.fehlt }} {{ a.fehlt == 1 ? 'Punkt' : 'Punkte' }} bis zum Ziel{% endif %}
-            </p>
+            <div class="stand__stimmung">
+                <p class="stand__spruch{% if a.ziel_erreicht %} stand__spruch--erreicht{% endif %}" data-feld="spruch">{{ s.spruch }}</p>
+                <p class="stand__status" data-feld="status">{{ s.status }}</p>
+            </div>
         </div>
 
-        <div class="balken" role="img" aria-label="{{ a.stand }} von 100 Punkten, Ziel {{ a.ziel }}" data-feld="balken">
+        <div class="balken" role="img" aria-label="{{ a.stand }} von 100 Punkten, Ziel {{ a.ziel }}. {{ s.spruch }}" data-feld="balken">
             <div class="balken__spur">
                 <div class="balken__fuellung fuellung--{{ a.stand }}" data-feld="fuellung"></div>
                 <div class="balken__segmente" aria-hidden="true"></div>
             </div>
             <div class="balken__ziel ziel--{{ a.ziel }}" aria-hidden="true"></div>
+            {# Etappen: ein Smiley je Viertel des Ziels. .ziel--N setzt nur die Lage. #}
+            <div class="balken__etappen" aria-hidden="true">
+                {%- for e in s.etappen %}
+                <span class="etappe ziel--{{ e.bei }}{% if e.erreicht %} etappe--erreicht{% endif %}" data-bei="{{ e.bei }}">{{ g.gesicht(e.stufe) }}</span>
+                {%- endfor %}
+            </div>
         </div>
         <div class="skala" aria-hidden="true">
             <span class="skala__wert skala__wert--links">0</span>

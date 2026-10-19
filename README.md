@@ -6,6 +6,11 @@ Belohnung – für die 9d eine Kanutour mit Übernachtung. Der Punktestand steht
 Er sinkt mit negativen und steigt mit positiven Einträgen aus dem Klassenbuch.
 Die Einträge erscheinen dort ohne Namen.
 
+Im Balken sitzen vier Smileys bei einem, zwei, drei Vierteln des Ziels und beim
+Ziel. Mit jeder erreichten Etappe wird das Gesicht neben dem Punktestand
+fröhlicher, von besorgt bis Jubel. Die Seite sagt immer, wie viele Punkte es
+noch bis zum nächsten Smiley sind (`app/Anzeige/Stimmung.php`).
+
 Datenquelle ist der wöchentliche CSV-Export aus WebUntis, den die Klassenlehrkraft
 hochlädt.
 

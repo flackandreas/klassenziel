@@ -75,10 +75,14 @@ final class AnzeigedatenTest extends TestCase
         $daten = self::daten();
 
         self::assertSame(
-            ['klasse', 'stand', 'ziel', 'fehlt', 'ziel_erreicht', 'countdown', 'woche', 'wertung', 'quelle', 'eintraege', 'weitere'],
+            ['klasse', 'stand', 'ziel', 'fehlt', 'ziel_erreicht', 'stimmung', 'countdown', 'woche', 'wertung', 'quelle', 'eintraege', 'weitere'],
             array_keys($daten)
         );
         self::assertSame(['name', 'schuljahr', 'belohnung'], array_keys($daten['klasse']));
+        self::assertSame(['stufe', 'spruch', 'status', 'naechste', 'fehlt_naechste', 'naechste_ist_ziel', 'etappen'], array_keys($daten['stimmung']));
+        foreach ($daten['stimmung']['etappen'] as $etappe) {
+            self::assertSame(['stufe', 'bei', 'erreicht'], array_keys($etappe));
+        }
 
         foreach ($daten['eintraege'] as $eintrag) {
             self::assertSame(Anzeigedaten::EINTRAG_FELDER, array_keys($eintrag));
@@ -125,9 +129,17 @@ final class AnzeigedatenTest extends TestCase
         self::assertSame(['bilanz' => 6, 'bilanz_text' => '+6', 'positiv' => 2, 'negativ' => 0], $daten['woche']);
         self::assertSame('19.10.2026', $daten['quelle']);
 
+        // Ziel 70: Etappen bei 18, 35, 53 und 70 - mit 54 Punkten auf Stufe 3.
+        self::assertSame(3, $daten['stimmung']['stufe']);
+        self::assertSame(70, $daten['stimmung']['naechste']);
+        self::assertSame(16, $daten['stimmung']['fehlt_naechste']);
+        self::assertTrue($daten['stimmung']['naechste_ist_ziel']);
+
         $erreicht = Anzeigedaten::baue(self::klasse(ziel: 54), self::wertung(), Gewichtung::vorgabe(), [], new DateTimeImmutable('2026-10-19'));
         self::assertTrue($erreicht['ziel_erreicht']);
         self::assertSame(0, $erreicht['fehlt']);
+        self::assertSame(4, $erreicht['stimmung']['stufe']);
+        self::assertNull($erreicht['stimmung']['naechste']);
     }
 
     public function testBlaettern(): void

@@ -4,7 +4,9 @@
  * Die Seite steht ohne dieses Skript vollstaendig da. Es tut drei Dinge:
  *   - der Balken waechst beim Laden vom zuletzt gesehenen zum aktuellen
  *     Stand (der zuletzt gesehene liegt nur auf diesem Geraet, im
- *     localStorage; mit prefers-reduced-motion ohne Animation),
+ *     localStorage; mit prefers-reduced-motion ohne Animation). Ueberquert
+ *     er dabei eine Smiley-Etappe, leuchtet sie auf, wenn er sie erreicht,
+ *     und huepft einmal,
  *   - alle fuenf Minuten holt es den Stand neu und aendert nur, was sich
  *     geaendert hat - ohne Neuladen, ohne Flackern,
  *   - "Weitere laden" haengt Eintraege an, statt die Seite neu zu laden.
@@ -52,21 +54,52 @@
 
     // --- Balken ---------------------------------------------------------
 
+    var DAUER = 1400;
+
+    var etappen = function () {
+        return Array.prototype.slice.call(document.querySelectorAll('.etappe'));
+    };
+    var bei = function (etappe) {
+        return parseInt(etappe.getAttribute('data-bei'), 10);
+    };
+
+    var schalteEtappen = function (stand) {
+        etappen().forEach(function (etappe) {
+            etappe.classList.remove('etappe--neu');
+            etappe.classList.toggle('etappe--erreicht', stand >= bei(etappe));
+        });
+    };
+
+    // Waechst der Balken, leuchtet jede ueberquerte Etappe auf, sobald die
+    // Fuellung dort ankommt - die Kurve der Animation ist vorne steil.
+    var feiereEtappen = function (von, nach) {
+        etappen().forEach(function (etappe) {
+            if (von < bei(etappe) && bei(etappe) <= nach) {
+                window.setTimeout(function () {
+                    etappe.classList.add('etappe--erreicht', 'etappe--neu');
+                }, Math.round(DAUER * 0.7 * (bei(etappe) - von) / (nach - von)));
+            }
+        });
+    };
+
     var setzeBalken = function (von, nach) {
         var fuellung = feld('fuellung');
-        if (!fuellung) {
+        if (!fuellung || ruhig || von === null || von === nach) {
+            if (fuellung) {
+                fuellung.style.width = nach + '%';
+            }
+            schalteEtappen(nach);
             return;
         }
-        if (ruhig || von === null || von === nach) {
-            fuellung.style.width = nach + '%';
-            return;
-        }
+        // Erst der Stand vor der Animation; sinkt er, gleich der neue.
+        schalteEtappen(Math.min(von, nach));
         fuellung.style.transition = 'none';
         fuellung.style.width = von + '%';
         void fuellung.offsetWidth;
         fuellung.style.transition = '';
         window.requestAnimationFrame(function () {
             fuellung.style.width = nach + '%';
+            feiereEtappen(von, nach);
         });
     };
 
@@ -133,13 +166,26 @@
     };
 
     var zeige = function (d) {
+        // Ein neues Ziel verschiebt alle Etappen - dann die Seite neu laden,
+        // statt sie hier nachzubauen. Das kommt selten vor.
+        if (d.ziel !== zielAktuell) {
+            window.location.reload();
+            return;
+        }
+
+        var s = d.stimmung;
         setzeText('stand', String(d.stand));
-        setzeText('status', d.ziel_erreicht
-            ? 'Ziel erreicht – jetzt halten!'
-            : 'Noch ' + d.fehlt + (d.fehlt === 1 ? ' Punkt' : ' Punkte') + ' bis zum Ziel');
-        var status = feld('status');
-        if (status) {
-            status.classList.toggle('stand__status--erreicht', d.ziel_erreicht);
+        setzeText('spruch', s.spruch);
+        setzeText('status', s.status);
+        var spruch = feld('spruch');
+        if (spruch) {
+            spruch.classList.toggle('stand__spruch--erreicht', d.ziel_erreicht);
+        }
+        var gesicht = feld('gesicht');
+        if (gesicht) {
+            for (var n = 0; n <= 4; n++) {
+                gesicht.classList.toggle('stimmung--' + n, n === s.stufe);
+            }
         }
 
         if (d.stand !== standAktuell) {
@@ -148,20 +194,9 @@
             merke(d.stand);
         }
 
-        if (d.ziel !== zielAktuell) {
-            document.querySelectorAll('.balken__ziel, .skala__ziel').forEach(function (element) {
-                element.style.left = d.ziel + '%';
-            });
-            var beschriftung = document.querySelector('.skala__ziel');
-            if (beschriftung) {
-                beschriftung.textContent = 'Ziel: ' + d.ziel;
-            }
-            zielAktuell = d.ziel;
-        }
-
         var balken = feld('balken');
         if (balken) {
-            balken.setAttribute('aria-label', d.stand + ' von 100 Punkten, Ziel ' + d.ziel);
+            balken.setAttribute('aria-label', d.stand + ' von 100 Punkten, Ziel ' + d.ziel + '. ' + s.spruch);
         }
 
         countdown(d.countdown);
