@@ -19,7 +19,7 @@ Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.202
 | SchulOS ist eine Laravel-App im Repository `schulos` | `schulos` ist die Marketing-Seite (React/Vite, Vercel). SchulOS selbst ist ein **Verbund**: `schulos-portal` (OIDC-Anbieter, PHP 8.2) plus je Modul ein eigenes Repository mit eigenem Hostnamen und eigener Datenbank |
 | Modul „Anträge“ als Vorlage | `feedback_rstn`: PHP 8.2, Twig, PDO, ohne Tests. Die neueren Konventionen stehen im **Portal** (Code im Abbild, CSP ohne `unsafe-inline`, PHPUnit + PHPStan, festgenagelte Actions) und in **Unterricht** (`schulos/sso`, `portal_konten`, Migrator, `rate_limits`, Token-Seiten ohne Anmeldung) |
 | Rollen aus SchulOS | Portalgruppen über `schulos/sso`: `PORTAL_ADMIN_GRUPPEN` = Verwaltung, `PORTAL_ZUGANG_GRUPPEN` = Zugang. Klassen aus IServ überträgt das Portal bewusst nicht |
-| Erreichbarkeit von außen offen (Planung, Abschnitt 13) | Weitgehend schon gelöst: `*.rstn.de` hat DNS-Platzhalter und Zertifikat, IServ leitet je Hostname an einen Port des Mac mini (`10.1.1.100`) weiter. Für Klassenziel fehlt nur ein Eintrag `klassenziel.rstn.de → 10.1.1.100:8010` |
+| Erreichbarkeit von außen offen (Planung, Abschnitt 13) | Weitgehend schon gelöst: `*.rstn.de` hat DNS-Platzhalter und Zertifikat, IServ leitet je Hostname an einen Port des Mac mini weiter. Für Klassenziel fehlt nur ein Eintrag `klassenziel.rstn.de → <Mac mini>:8010` (Adresse siehe `deploy/MAC-MINI.md` im Portal) |
 
 ## 2. Abweichungen von der Planung (Konventionen gehen vor)
 
