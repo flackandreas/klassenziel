@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Klassenziel\Klassen;
 
+use Klassenziel\Import\Importdienst;
 use Klassenziel\Konten\Konto;
 use Klassenziel\Sicherheit\Schluessel;
 use Klassenziel\Sicherheit\Tresor;
@@ -193,8 +194,9 @@ final class KlassenRepository
      * Der Link verfaellt, und alles, was aus dem Klassenbuch stammt und nicht
      * fuer die Wertung gebraucht wird, wird geloescht: die Originaltexte, die
      * Textvorlagen der Gruppierung, die Kennungen der Namensbestandteile und
-     * die Namensliste. Datum, Fach, Kategorie, Punkte und freigegebene
-     * Kurztexte bleiben - sie stehen ohnehin auf der oeffentlichen Seite.
+     * die Namensliste - und offene Import-Vorschauen mit Zeilen dieser
+     * Klasse. Datum, Fach, Kategorie, Punkte und freigegebene Kurztexte
+     * bleiben - sie stehen ohnehin auf der oeffentlichen Seite.
      */
     public function archivieren(int $id): void
     {
@@ -215,11 +217,41 @@ final class KlassenRepository
 
             $this->verbindung->prepare('DELETE FROM namensliste WHERE klasse_id = ?')->execute([$id]);
 
+            $this->verwirfVorschauenMit($id);
+
             $this->verbindung->commit();
         } catch (\Throwable $e) {
             $this->verbindung->rollBack();
 
             throw $e;
+        }
+    }
+
+    /**
+     * Offene Import-Vorschauen mit Zeilen dieser Klasse verwerfen.
+     *
+     * Ihr Plan traegt die verschluesselten Originaltexte - nach dem
+     * Archivieren soll davon nichts mehr in der Datenbank liegen, auch nicht
+     * fuer die Stunde, die eine Vorschau sonst noch gilt. Welche Klassen eine
+     * Vorschau betrifft, steht nur im verschluesselten Plan; es sind wenige,
+     * also wird jede offene geoeffnet.
+     */
+    private function verwirfVorschauenMit(int $klasseId): void
+    {
+        $tresor = new Tresor($this->schluessel);
+        $abfrage = $this->verbindung->query("SELECT id, plan FROM importe WHERE status = 'vorschau' AND plan IS NOT NULL");
+        $verwerfen = $this->verbindung->prepare(
+            "UPDATE importe SET status = 'verworfen', plan = NULL, laeuft_ab = NULL WHERE id = ?"
+        );
+
+        foreach ($abfrage !== false ? ($abfrage->fetchAll() ?: []) : [] as $zeile) {
+            $json = $tresor->oeffnenOderNull((string) $zeile['plan'], Importdienst::ZWECK_PLAN);
+            $plan = $json !== null ? json_decode($json, true) : null;
+
+            // Ein Plan, der sich nicht oeffnen laesst, ist ohnehin unbrauchbar.
+            if (!is_array($plan) || !is_array($plan['klassen'] ?? null) || array_key_exists($klasseId, $plan['klassen'])) {
+                $verwerfen->execute([(int) $zeile['id']]);
+            }
         }
     }
 

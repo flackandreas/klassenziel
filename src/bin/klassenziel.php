@@ -8,7 +8,12 @@ declare(strict_types=1);
  *   php bin/klassenziel.php migrieren     Migrationen einspielen
  *   php bin/klassenziel.php status        Stand von Schema und Schluessel
  *   php bin/klassenziel.php schluessel    einen neuen Hauptschluessel ausgeben
- *   php bin/klassenziel.php aufraeumen    Ratenbremse und abgelaufene Vorschauen leeren
+ *   php bin/klassenziel.php aufraeumen    Ratenbremse, abgelaufene Vorschauen, alte Punktestaende
+ *
+ * aufraeumen ist fuer einen naechtlichen Aufruf gedacht (launchd auf dem Mac
+ * mini, siehe Betriebshandbuch im Portal). Die Ratenbremse raeumt die
+ * oeffentliche Seite auch von selbst gelegentlich auf; abgelaufene Vorschauen
+ * verwirft der naechste Import.
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -78,10 +83,30 @@ switch ($befehl) {
         $db = Datenbank::verbindung();
         (new Ratenbremse($db))->raeumeAuf();
         $geloescht = $db->exec(
-            "UPDATE importe SET status = 'verworfen', plan = NULL
+            "UPDATE importe SET status = 'verworfen', plan = NULL, laeuft_ab = NULL
               WHERE status = 'vorschau' AND laeuft_ab < NOW()"
         );
-        $sage('Klassenziel: aufgeraeumt, ' . (int) $geloescht . ' abgelaufene Vorschau(en) verworfen.');
+
+        // Zwischengespeicherte Punktestaende: von gestern und aelter sind sie
+        // ohnehin ungueltig (der Tag gehoert zum Schluessel), die archivierter
+        // Klassen werden nie mehr abgerufen.
+        $ablage = (string) umgebung('KLASSENZIEL_ABLAGE', dirname(__DIR__) . '/storage');
+        $archiviert = array_flip(array_map('intval', $db->query(
+            'SELECT id FROM klassen WHERE archiviert_am IS NOT NULL'
+        )->fetchAll(PDO::FETCH_COLUMN) ?: []));
+        $staende = 0;
+        foreach (glob($ablage . '/cache/stand/*.json') ?: [] as $datei) {
+            $klasseId = (int) strtok(basename($datei), '-');
+            if (isset($archiviert[$klasseId]) || (int) @filemtime($datei) < time() - 86400) {
+                $staende += @unlink($datei) ? 1 : 0;
+            }
+        }
+
+        $sage(sprintf(
+            'Klassenziel: aufgeraeumt - %d abgelaufene Vorschau(en) verworfen, %d alte Punktestaende entfernt.',
+            (int) $geloescht,
+            $staende
+        ));
         exit(0);
 
     default:

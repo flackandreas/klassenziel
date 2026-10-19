@@ -97,6 +97,21 @@ jobs:
           docker logs kz
           exit 1
 
+      # Der geheime Link darf nicht im Zugriffsprotokoll stehen.
+      - name: Zugriffsprotokoll maskiert die Links
+        run: |
+          link=GEHEIMERLINKxxxxxxxxxxxxxxxxxxxx
+          curl -s -o /dev/null "http://127.0.0.1:8080/klassenziel/$link" || true
+          curl -s -o /dev/null "http://127.0.0.1:8080/klassenziel/$link/stand.json" || true
+          sleep 1
+          docker logs kz > protokoll.txt 2>&1
+          if grep -q "$link" protokoll.txt; then
+            echo "Der Link steht im Protokoll:" >&2
+            grep "$link" protokoll.txt >&2
+            exit 1
+          fi
+          grep -q '/klassenziel/\[\.\.\.\]' protokoll.txt
+
       - name: Kein echter Export im Repository
         run: |
           if git ls-files | grep -Ei 'ClassregEventPerKlasse|\.(csv|tsv|xlsx?)$' | grep -v '^src/tests/daten/'; then

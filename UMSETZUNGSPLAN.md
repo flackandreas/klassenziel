@@ -8,7 +8,7 @@ Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.202
 | 2 – Import | erledigt |
 | 3 – Prüfliste und Wertung | erledigt |
 | 4 – Öffentliche Ansicht | erledigt |
-| 5 – Datenschutz und Betrieb | offen |
+| 5 – Datenschutz und Betrieb | umgesetzt; Probelauf auf dem Pi offen |
 
 ---
 
@@ -118,6 +118,8 @@ Wie in der Planung, Abschnitt 10, mit diesen Änderungen:
 **Phase 4 – Öffentliche Ansicht.** Beamer- (1280×720 bis 1920×1080, ohne Scrollen) und Handy-Layout (390×844) mit den Design-Tokens. Bricolage Grotesque und Atkinson Hyperlegible selbst gehostet; die woff2-Dateien kommen aus den Fontsource-npm-Paketen, OFL, Lizenztext liegt bei. Aktualisierung ohne Flackern, `prefers-reduced-motion`, Kontrast geprüft. Am Ende Sichtprüfung im eingebauten Browser in beiden Größen.
 
 **Phase 5 – Datenschutz und Betrieb.** Datenschutz-Test über Datenbank-Dump, öffentliches HTML und Log; Archivieren mit Löschung von Originaltexten, Vorlagen und Namens-Hashes; `bin/klassenziel.php aufraeumen` setzt die Löschregel um. Abschnitt im `deploy/MAC-MINI.md` (IServ-Eintrag, `.env`, Datenbank anlegen, Sicherung des Schlüssels). Erst Test auf dem Pi, dann Übergabe für den Mac mini. Die Sicherung erfasst `db_klassenziel` von selbst (`--all-databases`), der Schlüssel muss aber mit der `pi/.env` gesichert werden.
+
+*Umgesetzt:* Die Löschregel greift beim Import selbst. `aufraeumen` räumt die Ratenbremse, abgelaufene Vorschauen und alte Punktestände auf. Archivieren verwirft zusätzlich offene Vorschauen mit der Klasse. Dazu kommen der Prüfdurchlauf `pruefung/06-klassenziel.sh` im Portal und Abschnitt 11 im Betriebshandbuch.
 
 Commits lege ich lokal an. GitHub-Repository anlegen, pushen und den Pull Request im Portal öffne ich erst nach deinem OK.
 

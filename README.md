@@ -9,16 +9,20 @@ Die Einträge erscheinen dort ohne Namen.
 Datenquelle ist der wöchentliche CSV-Export aus WebUntis, den die Klassenlehrkraft
 hochlädt.
 
-> **Stand:** Phase 4 von 5. Fertig sind:
+> **Stand:** alle fünf Phasen umgesetzt:
 >
 > - Gerüst, Datenmodell, Anmeldung über das Portal
 > - Klassenverwaltung und geheimer Link
 > - Import des WebUntis-Exports
 > - Prüfliste, Gewichtung mit Simulation, Wochenbonus und Ferien
 > - öffentliche Anzeige für Beamer und Handy
+> - Datenschutz-Test über Datenbank, Ablage, Seiten und Protokolle; Archivieren;
+>   Betrieb im Verbund
 >
-> Es folgen Datenschutz-Tests und Betrieb auf dem Mac mini; der Plan steht in
-> [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
+> Offen ist der Probelauf auf dem Pi, danach der Mac mini. Der Plan steht in
+> [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md). Wie Klassenziel auf dem Mac mini
+> läuft, steht im Betriebshandbuch des Portals, `deploy/MAC-MINI.md`,
+> Abschnitt 11.
 
 ---
 
@@ -64,7 +68,8 @@ Die Regeln stehen in der Planung (Abschnitt 5). So setzt der Code sie um:
 | Zugriffsprotokoll | Apache protokolliert `/klassenziel/[...]` statt des Links |
 | Exporte nie im Repository | `.gitignore`, `.dockerignore` und ein CI-Schritt. Tests arbeiten nur mit erfundenen Daten unter `src/tests/daten/` |
 | Uploads nie auf der Platte | `/tmp` im Container ist ein `tmpfs` |
-| Archivieren | Der Link verfällt. Originaltexte, Textvorlagen, Namenskennungen und die Namensliste werden gelöscht |
+| Archivieren | Der Link verfällt. Originaltexte, Textvorlagen, Namenskennungen und die Namensliste werden gelöscht. Offene Vorschauen eines Imports, die die Klasse enthalten, werden verworfen |
+| Nachweis | `tests/Integration/DatenschutzTest.php` spielt den ganzen Ablauf durch und durchsucht danach jede Tabelle, die Ablage, die öffentlichen Seiten und die Protokolle nach Namen, Kürzeln und Originaltexten. Die CI prüft am fertigen Abbild, dass der Link nicht im Zugriffsprotokoll steht |
 
 ### Import
 
@@ -209,5 +214,9 @@ mit dem eingebauten Server von PHP. Ohne `TEST_DB_NAME` werden sie übersprungen
 docker compose exec web php bin/klassenziel.php migrieren
 docker compose exec web php bin/klassenziel.php status       # Schema und Schlüssel
 docker compose exec web php bin/klassenziel.php schluessel   # neuen Schlüssel ausgeben
-docker compose exec web php bin/klassenziel.php aufraeumen
+docker compose exec web php bin/klassenziel.php aufraeumen   # Ratenbremse, abgelaufene Vorschauen, alte Punktestände
 ```
+
+`aufraeumen` ist für einen nächtlichen Aufruf gedacht; die Vorlage für launchd
+liegt im Portal unter `deploy/de.schulos.klassenziel.plist`. Die Löschregel
+für Originaltexte braucht ihn nicht, sie greift beim Import selbst.
