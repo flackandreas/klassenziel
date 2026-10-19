@@ -9,7 +9,9 @@
     <div>
         <h1>{{ klasse.anzeigename }}</h1>
         <p class="leise">{{ klasse.exportKuerzel }} · Schuljahr {{ klasse.schuljahr }} · Ziel: {{ klasse.belohnung }}</p>
+        <p class="leise">{% if klasse.datenstand %}Datenstand: Export vom {{ klasse.datenstand|date('d.m.Y, H:i') }} Uhr{% else %}Noch kein Export eingelesen.{% endif %}</p>
     </div>
+    {% if not klasse.istArchiviert %}<a class="knopf" href="/import">Export einlesen</a>{% endif %}
 </div>
 
 {% if klasse.istArchiviert %}

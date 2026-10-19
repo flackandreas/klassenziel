@@ -19,6 +19,7 @@ final class Wegweiser
         '/anmelden' => 'anmelden.php',
         '/abmelden' => 'abmelden.php',
         '/klassen/neu' => 'klasse_neu.php',
+        '/import' => 'import.php',
         '/datenschutz' => 'datenschutz.php',
         '/sso/start' => 'sso_start.php',
         '/sso/rueckweg' => 'sso_rueckweg.php',
@@ -29,6 +30,7 @@ final class Wegweiser
     /** @var array<string,string> */
     private const MUSTER = [
         '#^/klassen/(?<id>[1-9][0-9]{0,8})$#' => 'klasse.php',
+        '#^/import/(?<id>[1-9][0-9]{0,8})$#' => 'import_vorschau.php',
         '#^/klassenziel/(?<token>[A-Za-z0-9_-]{1,64})$#' => 'anzeige.php',
     ];
 

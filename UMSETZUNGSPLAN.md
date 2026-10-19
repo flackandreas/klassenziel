@@ -5,7 +5,7 @@ Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.202
 | Phase | Stand |
 |---|---|
 | 1 – Gerüst, Datenmodell, Klassen, Link | erledigt |
-| 2 – Import | offen |
+| 2 – Import | erledigt |
 | 3 – Prüfliste und Wertung | offen |
 | 4 – Öffentliche Ansicht | offen |
 | 5 – Datenschutz und Betrieb | offen |

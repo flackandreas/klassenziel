@@ -30,6 +30,9 @@
                     {{ klasse.exportKuerzel }} · {{ klasse.schuljahr }}
                     {% if klasse.istArchiviert %} · archiviert{% elseif klasse.stichtag %} · Stichtag {{ klasse.stichtag|date('d.m.Y') }}{% else %} · Stichtag noch offen{% endif %}
                 </span>
+                <span class="klassenliste__info">
+                    {% if klasse.datenstand %}Export vom {{ klasse.datenstand|date('d.m.Y') }}{% else %}noch kein Export eingelesen{% endif %}
+                </span>
             </a>
         </li>
     {% endfor %}

@@ -1,0 +1,153 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}{{ plan ? 'Vorschau' : 'Import' }}{% endblock %}
+
+{% set richtungen = {
+    'negativ': 'negativ',
+    'positiv': 'positiv',
+    'neutral': 'neutral',
+    'pruefen': 'noch einzustufen'
+} %}
+{% set gruende = {
+    'unbekannt': 'keine Klasse in Klassenziel',
+    'nicht_zustaendig': 'nicht Ihre Klasse',
+    'mehrdeutig': 'Kürzel gehört zu mehreren laufenden Klassen'
+} %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/import">Export einlesen</a> › {{ plan ? 'Vorschau' : 'Import' }}</p>
+
+{% if plan %}
+    <h1>Vorschau</h1>
+    <p class="leise">
+        {{ import.dateiname }}{% if import.exportzeitpunkt %} · Export vom {{ import.exportzeitpunkt|date('d.m.Y, H:i') }} Uhr{% endif %}
+        · gültig bis {{ import.laeuft_ab|date('H:i') }} Uhr. Noch ist nichts gespeichert.
+    </p>
+
+    <section class="karte" aria-labelledby="titel-zahlen">
+        <h2 id="titel-zahlen">Überblick</h2>
+        <dl class="kennzahlen">
+            <div><dt>Neue Zeilen</dt><dd>{{ plan.zaehler.zeilen_neu }}</dd></div>
+            <div><dt>Schon eingelesen</dt><dd>{{ plan.zaehler.zeilen_duplikat }}</dd></div>
+            <div><dt>Neue Vorfälle</dt><dd>{{ plan.zaehler.vorfaelle_neu }}</dd></div>
+            <div><dt>Bekannten Vorfällen zugeordnet</dt><dd>{{ plan.zaehler.vorfaelle_zugeordnet }}</dd></div>
+            <div><dt>Für die Prüfliste</dt><dd>{{ plan.zaehler.pruefliste }}</dd></div>
+            <div><dt>davon noch einzustufen</dt><dd>{{ plan.zaehler.ohne_einstufung }}</dd></div>
+            <div><dt>Info / neutral, zählt nicht</dt><dd>{{ plan.zaehler.neutral }}</dd></div>
+            <div><dt>Andere Klassen, übergangen</dt><dd>{{ plan.zaehler.zeilen_fremd }}</dd></div>
+        </dl>
+
+        {% if plan.klassen is not empty %}
+        <p>
+            {% for klasse in plan.klassen %}
+                <strong>{{ klasse.name }}</strong> ({{ klasse.kuerzel }}): {{ klasse.zeilen_neu }} neu, {{ klasse.duplikate }} schon bekannt{% if not loop.last %} · {% endif %}
+            {% endfor %}
+        </p>
+        {% endif %}
+
+        {% if plan.fremd is not empty %}
+        <p class="leise">Übergangen:
+            {% for f in plan.fremd %}{{ f.kuerzel }} – {{ f.zeilen }} {{ f.zeilen == 1 ? 'Zeile' : 'Zeilen' }} ({{ gruende[f.grund] ?? f.grund }}){% if not loop.last %}; {% endif %}{% endfor %}
+        </p>
+        {% endif %}
+
+        {% if plan.unlesbar is not empty %}
+        <p class="meldung meldung--fehler">
+            {{ plan.unlesbar|length }} {{ plan.unlesbar|length == 1 ? 'Zeile ist' : 'Zeilen sind' }} nicht lesbar (fehlende Klasse oder kein gültiges Datum) und werden übergangen:
+            Zeile {{ plan.unlesbar|join(', ') }}.
+        </p>
+        {% endif %}
+
+        {% if plan.zaehler.zeilen_neu == 0 %}
+        <p class="meldung meldung--hinweis">Nichts Neues – alle Einträge dieser Klassen sind schon eingelesen. Bestätigen aktualisiert nur den Datenstand.</p>
+        {% endif %}
+
+        <div class="aktionen">
+            <form method="post" action="/import/{{ import.id }}" class="inline">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <input type="hidden" name="aktion" value="bestaetigen">
+                <button class="knopf" type="submit">Bestätigen und einlesen</button>
+            </form>
+            <form method="post" action="/import/{{ import.id }}" class="inline">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <input type="hidden" name="aktion" value="verwerfen">
+                <button class="knopf knopf--zweit" type="submit">Verwerfen</button>
+            </form>
+        </div>
+    </section>
+
+    {% set sichtbare = plan.neue_vorfaelle|filter(v => v.status != 'ignoriert') %}
+    {% if sichtbare is not empty %}
+    <section class="karte" aria-labelledby="titel-neu">
+        <h2 id="titel-neu">Neue Vorfälle</h2>
+        <p class="leise">Namen aus der Spalte „Name“ sind durch {{ '⟨Name⟩' }} ersetzt. Andere Namen im Text kann Klassenziel nicht sicher erkennen – der Originaltext bleibt deshalb immer intern.</p>
+        <div class="tabelle-huelle">
+        <table class="tabelle">
+            <thead><tr><th>Datum</th><th>Fach</th><th>Kategorie</th><th>Beteiligt</th><th>Text (gekürzt)</th></tr></thead>
+            <tbody>
+            {% for v in sichtbare %}
+                <tr>
+                    <td>{{ v.datum|date('d.m.') }}</td>
+                    <td>{{ v.fach ?: '–' }}</td>
+                    <td>
+                        {{ v.kategorie ?: 'ohne Kategorie' }}<br>
+                        <span class="marke-klein marke-klein--{{ v.richtung }}">{{ richtungen[v.richtung] ?? v.richtung }}</span>
+                        {% if v.status == 'zuordnung_pruefen' %}<span class="marke-klein marke-klein--pruefen">gehört vielleicht zu einem älteren Vorfall</span>{% endif %}
+                    </td>
+                    <td>{{ v.klasseneintrag and v.beteiligte == 0 ? 'Klasse' : v.beteiligte }}</td>
+                    <td class="kurztext">{{ v.kurzform }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if plan.zuordnungen is not empty %}
+    <section class="karte" aria-labelledby="titel-zu">
+        <h2 id="titel-zu">Zu bekannten Vorfällen</h2>
+        <p class="leise">Diese Zeilen gehören zu Vorfällen, die schon eingelesen sind – etwa weil eine weitere Person eingetragen wurde. Der Vorfall zählt weiterhin einmal.</p>
+        <div class="tabelle-huelle">
+        <table class="tabelle">
+            <thead><tr><th>Datum</th><th>Fach</th><th>Kategorie</th><th>Weitere Beteiligte</th><th>Text (gekürzt)</th></tr></thead>
+            <tbody>
+            {% for z in plan.zuordnungen %}
+                <tr>
+                    <td>{{ z.datum|date('d.m.') }}</td>
+                    <td>{{ z.fach ?: '–' }}</td>
+                    <td>{{ z.kategorie ?: 'ohne Kategorie' }}</td>
+                    <td>+{{ z.beteiligte }}</td>
+                    <td class="kurztext">{{ z.kurzform }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    {% endif %}
+
+{% else %}
+    <h1>Import vom {{ (import.bestaetigt_am ?: import.angelegt_am)|date('d.m.Y, H:i') }} Uhr</h1>
+    {% if import.status == 'bestaetigt' %}
+    <section class="karte">
+        <dl class="kennzahlen">
+            <div><dt>Datei</dt><dd class="klein">{{ import.dateiname }}</dd></div>
+            <div><dt>Export vom</dt><dd class="klein">{{ import.exportzeitpunkt ? import.exportzeitpunkt|date('d.m.Y H:i') : '–' }}</dd></div>
+            <div><dt>Neue Zeilen</dt><dd>{{ import.zeilen_neu }}</dd></div>
+            <div><dt>Schon eingelesen</dt><dd>{{ import.zeilen_duplikat }}</dd></div>
+            <div><dt>Neue Vorfälle</dt><dd>{{ import.vorfaelle_neu }}</dd></div>
+            <div><dt>Für die Prüfliste</dt><dd>{{ import.pruefliste }}</dd></div>
+            <div><dt>Andere Klassen, übergangen</dt><dd>{{ import.zeilen_fremd }}</dd></div>
+        </dl>
+        <p class="leise">Eingelesen von {{ import.importiert_von_name ?: 'unbekannt' }}. Die neuen Vorfälle stehen in der Prüfliste der Klasse.</p>
+        <p><a class="knopf" href="/">Zu meinen Klassen</a></p>
+    </section>
+    {% else %}
+    <section class="karte">
+        <p>Diese Vorschau ist {{ import.status == 'verworfen' ? 'verworfen oder abgelaufen' : 'nicht mehr offen' }}. Es wurde nichts eingelesen.</p>
+        <p><a class="knopf" href="/import">Datei erneut hochladen</a></p>
+    </section>
+    {% endif %}
+{% endif %}
+{% endblock %}

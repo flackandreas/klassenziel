@@ -1,0 +1,11 @@
+Klasse	Datum	Fach	Name	Benutzer	Eintragskategorie	Kategoriegruppe	Text
+R9d	14.09.26		R9d	ABC	Info/Klasse	Inf. / neutral	Fluchtwege besprochen
+R9d	16.09.26	G	Muster Max	XYZ	klein/Schüler*in	negativ	Max stört trotz Ermahnung. (XYZ)
+R9d	01.10.26	E-G	Beispiel Ben	KLM	klein/Schüler*in	negativ	"Ben verlässt in der Pause das Gelände. Nachsitzen. KLM "
+R9d	01.10.26	E-G	Test Tina	KLM	klein/Schüler*in	negativ	"Tina verlässt in der Pause das Gelände. Nachsitzen. KLM "
+R9d	05.10.26	GK	Muster Max	DEF	groß/Schüler*in	negativ	"Max verweigert die Auszeit, die Schulleitung wird geholt. (DEF)"
+R9d	06.10.26	M-G	Test Tina	MIC			Haben prima im Unterricht mitgemacht. MIC
+R9d	06.10.26	M-G	Beispiel Ben	MIC			Haben prima im Unterricht mitgemacht. MIC
+R9d	09.10.26	M-G	R9d	MIC	klein/Klasse	negativ	"Unterricht heute kaum möglich, ""Tisch vor der Tür"" eingerichtet. MIC"
+R9e	09.10.26	D-M	Anders Anna	QRS	klein/Schüler*in	negativ	Anna kommt zu spät. QRS
+

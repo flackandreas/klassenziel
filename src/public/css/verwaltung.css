@@ -250,6 +250,42 @@ input:focus, select:focus, textarea:focus { border-color: var(--blau); }
 .linkfeld { display: flex; gap: 10px; margin: 12px 0 8px; }
 .linkfeld input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9rem; }
 
+/* --- Import --- */
+
+.aufzaehlung { margin: 0; padding-left: 1.2em; }
+.aufzaehlung li { margin-bottom: 6px; }
+
+.kennzahlen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 0 0 16px;
+}
+.kennzahlen div { background: var(--grund); border-radius: var(--radius-klein); padding: 10px 14px; }
+.kennzahlen dt { font-size: .85rem; color: var(--text-leise); }
+.kennzahlen dd { margin: 2px 0 0; font-family: var(--schrift-titel); font-weight: 700; font-size: 1.5rem; }
+.kennzahlen dd.klein { font-family: var(--schrift-text); font-size: 1rem; font-weight: 400; word-break: break-all; }
+
+.tabelle-huelle { overflow-x: auto; margin: 0 -4px; }
+.tabelle { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.tabelle th, .tabelle td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--linie); }
+.tabelle th { font-size: .85rem; color: var(--text-leise); font-weight: 700; }
+.tabelle .zahl { text-align: right; font-variant-numeric: tabular-nums; }
+.tabelle .kurztext { min-width: 220px; color: var(--text-leise); }
+
+.marke-klein {
+    display: inline-block;
+    font-size: .8rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 8px;
+    margin-top: 2px;
+}
+.marke-klein--negativ { background: var(--negativ-grund); color: var(--negativ-text); }
+.marke-klein--positiv { background: var(--positiv-grund); color: var(--positiv-text); }
+.marke-klein--neutral { background: var(--grund); color: var(--text-leise); }
+.marke-klein--pruefen { background: #FFF4CC; color: #6B4E00; }
+
 /* --- Fusszeile --- */
 
 .fusszeile { margin-top: 36px; font-size: .88rem; color: var(--text-leise); }

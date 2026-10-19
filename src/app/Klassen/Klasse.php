@@ -22,6 +22,8 @@ final class Klasse
         public readonly ?DateTimeImmutable $archiviertAm,
         public readonly int $datenVersion,
         public readonly bool $hatLink,
+        /** Zeitpunkt des juengsten eingelesenen Exports mit dieser Klasse. */
+        public readonly ?DateTimeImmutable $datenstand = null,
     ) {
     }
 
@@ -41,6 +43,7 @@ final class Klasse
             archiviertAm: $zeile['archiviert_am'] !== null ? new DateTimeImmutable((string) $zeile['archiviert_am']) : null,
             datenVersion: (int) $zeile['daten_version'],
             hatLink: $zeile['link_token_kennung'] !== null,
+            datenstand: ($zeile['datenstand'] ?? null) !== null ? new DateTimeImmutable((string) $zeile['datenstand']) : null,
         );
     }
 

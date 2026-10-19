@@ -9,9 +9,10 @@ Die Einträge erscheinen dort ohne Namen.
 Datenquelle ist der wöchentliche CSV-Export aus WebUntis, den die Klassenlehrkraft
 hochlädt.
 
-> **Stand:** Phase 1 von 5 – Gerüst, Datenmodell, Anmeldung über das Portal,
-> Klassenverwaltung, geheimer Link. Import, Prüfliste, Wertung und die eigentliche
-> Anzeige folgen; der Plan steht in [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
+> **Stand:** Phase 2 von 5. Fertig sind Gerüst, Datenmodell, Anmeldung über das
+> Portal, Klassenverwaltung, geheimer Link und der Import des WebUntis-Exports.
+> Prüfliste, Wertung und die eigentliche Anzeige folgen; der Plan steht in
+> [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
 
 ---
 
@@ -58,6 +59,29 @@ Die Regeln stehen in der Planung (Abschnitt 5). So setzt der Code sie um:
 | Exporte nie im Repository | `.gitignore`, `.dockerignore` und ein CI-Schritt. Tests arbeiten nur mit erfundenen Daten unter `src/tests/daten/` |
 | Uploads nie auf der Platte | `/tmp` im Container ist ein `tmpfs` |
 | Archivieren | Der Link verfällt. Originaltexte, Textvorlagen, Namenskennungen und die Namensliste werden gelöscht |
+
+### Import
+
+1. **Hochladen.** Die Datei wird gelesen und nicht gespeichert.
+   - Tabulator, Semikolon oder Komma als Trennzeichen
+   - `""` in Anführungszeichen, Zeilenumbrüche in einem Feld
+   - BOM, Windows-Zeilenenden und Windows-1252 aus Excel
+   - Datum `dd.mm.yy`
+2. **Fingerabdruck je Zeile.** HMAC über Klasse, Datum, Fach, Name, Benutzer,
+   Kategorie und Text, nach Trimmen und Unicode-NFC. Bekannte Zeilen werden
+   übersprungen. Dadurch ist der Import idempotent, obwohl der Export kumulativ ist.
+3. **Gruppierung.** Zeilen gehören zu einem Vorfall bei gleicher Klasse, gleichem
+   Datum, Fach, Lehrkraft und gleicher Kategorie, wenn die Texte nach dem
+   Ersetzen der Namen dieser Zeile zu mindestens 0,8 ähnlich sind (Levenshtein).
+   Ein Vorfall zählt einmal, unabhängig von der Zahl der Beteiligten.
+4. **Vorschau.** Zwischen Hochladen und Bestätigen liegt ein namensfreier,
+   verschlüsselter Plan in der Datenbank, der nach einer Stunde abläuft.
+5. **Bestätigen.** Läuft in einer Transaktion. Danach greift die Löschregel:
+   Ein entschiedener Vorfall, dem dieser Import nichts hinzufügt, verliert
+   Originaltext und Textvorlage.
+
+Einträge der Kategoriegruppe „Inf. / neutral“ werden ohne Text gespeichert, nur
+damit sie nicht erneut auftauchen, und nie gezählt.
 
 **Der Schlüssel `KLASSENZIEL_SCHLUESSEL` gehört in die Sicherung.** Ohne ihn
 sind die Originaltexte unlesbar, alle Links müssen neu erzeugt werden, und die
@@ -114,6 +138,7 @@ mit dem eingebauten Server von PHP. Ohne `TEST_DB_NAME` werden sie übersprungen
 | `/datenschutz` | Hinweise zum Datenschutz (Platzhalter) |
 | `/` | meine Klassen |
 | `/klassen/neu`, `/klassen/{id}` | anlegen, bearbeiten, Link, Zuständigkeit, archivieren |
+| `/import`, `/import/{id}` | Export hochladen, Vorschau, bestätigen oder verwerfen, Protokoll |
 | `/sso/start`, `/sso/rueckweg`, `/sso/abmelden`, `/abmelden` | Anmeldung über das Portal |
 | `/healthz` | Lebenszeichen für das Portal |
 

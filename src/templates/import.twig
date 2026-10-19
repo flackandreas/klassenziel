@@ -1,0 +1,72 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Export einlesen{% endblock %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › Export einlesen</p>
+<h1>Export einlesen</h1>
+<p class="leise">Der wöchentliche Export der Klassenbucheinträge aus WebUntis. Er enthält alle Einträge seit Schuljahresbeginn;
+   was schon eingelesen ist, wird übersprungen. Derselbe Export lässt sich also gefahrlos noch einmal hochladen.</p>
+
+{% if fehler %}<div class="meldung meldung--fehler" role="alert">{{ fehler }}</div>{% endif %}
+
+{% if klassen is empty %}
+    <section class="karte">
+        <h2>Zuerst eine Klasse anlegen</h2>
+        <p>Eingelesen werden nur Einträge von Klassen, für die Sie zuständig sind. <a href="/klassen/neu">Klasse anlegen</a></p>
+    </section>
+{% else %}
+<form class="karte" method="post" action="/import" enctype="multipart/form-data">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="feld">
+        <label for="export">Datei „ClassregEventPerKlasse_…csv“</label>
+        <input id="export" name="export" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain,text/tab-separated-values" required>
+        <p class="feld__hinweis">Eingelesen werden die Einträge für
+            {% for klasse in klassen %}{{ klasse.anzeigename }} ({{ klasse.exportKuerzel }}){% if not loop.last %}, {% endif %}{% endfor %}.
+            Andere Klassen in der Datei werden gemeldet und übergangen.</p>
+    </div>
+    <div class="aktionen">
+        <button class="knopf" type="submit">Vorschau anzeigen</button>
+        <span class="leise">Noch wird nichts gespeichert – erst nach dem Bestätigen.</span>
+    </div>
+</form>
+
+<section class="karte meldung--hinweis-karte" aria-labelledby="titel-schutz">
+    <h2 id="titel-schutz">Was mit der Datei geschieht</h2>
+    <ul class="aufzaehlung">
+        <li>Die Datei selbst wird nicht gespeichert. Schülernamen bleiben nur für die Dauer des Einlesens im Arbeitsspeicher.</li>
+        <li>Den Originaltext aus dem Klassenbuch sehen nur Sie, verschlüsselt gespeichert, als Grundlage für einen neutralen Kurztext.
+            Gelöscht wird er, sobald der Vorfall entschieden ist und ein späterer Export ihm nichts mehr hinzufügt.</li>
+        <li>Kürzel der Lehrkräfte werden nur als Prüfsumme gespeichert und nie angezeigt.</li>
+    </ul>
+</section>
+{% endif %}
+
+<section class="karte" aria-labelledby="titel-protokoll">
+    <h2 id="titel-protokoll">Bisherige Importe</h2>
+    {% if protokoll is empty %}
+        <p class="leise">Noch keiner.</p>
+    {% else %}
+    <div class="tabelle-huelle">
+    <table class="tabelle">
+        <thead>
+            <tr><th>Eingelesen</th><th>Export vom</th><th>Datei</th><th class="zahl">Neue Zeilen</th><th class="zahl">Schon bekannt</th><th class="zahl">Neue Vorfälle</th><th>von</th></tr>
+        </thead>
+        <tbody>
+        {% for eintrag in protokoll %}
+            <tr>
+                <td><a href="/import/{{ eintrag.id }}">{{ eintrag.bestaetigt_am|date('d.m.Y H:i') }}</a></td>
+                <td>{{ eintrag.exportzeitpunkt ? eintrag.exportzeitpunkt|date('d.m.Y H:i') : '–' }}</td>
+                <td>{{ eintrag.dateiname }}</td>
+                <td class="zahl">{{ eintrag.zeilen_neu }}</td>
+                <td class="zahl">{{ eintrag.zeilen_duplikat }}</td>
+                <td class="zahl">{{ eintrag.vorfaelle_neu }}</td>
+                <td>{{ eintrag.importiert_von_name ?: '–' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

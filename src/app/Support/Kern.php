@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Klassenziel\Support;
 
+use Klassenziel\Import\Importdienst;
 use Klassenziel\Klassen\KlassenRepository;
 use Klassenziel\Konten\Konten;
 use Klassenziel\Konten\Konto;
@@ -76,6 +77,11 @@ final class Kern
     public function konten(): Konten
     {
         return new Konten($this->db());
+    }
+
+    public function importdienst(): Importdienst
+    {
+        return new Importdienst($this->db(), $this->schluessel(), $this->klassen());
     }
 
     public function ratenbremse(): Ratenbremse
