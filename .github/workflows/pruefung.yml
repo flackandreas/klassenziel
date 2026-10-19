@@ -1,0 +1,105 @@
+# Prueft jeden Pull Request und jeden Push auf main.
+#
+# Die Bausteine von GitHub sind auf einen Commit festgelegt statt auf einen
+# Versionsnamen, wie im Portal: ein Name laesst sich nachtraeglich auf anderen
+# Code umbiegen, ein Commit nicht.
+name: Pruefung
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pruefung-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHPUnit und PHPStan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Die Integrationstests brauchen eine MariaDB - dieselbe Version wie im
+    # Betrieb. Sie leeren ihre Datenbank bei jedem Test.
+    services:
+      db:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: wurzel
+          MARIADB_DATABASE: db_klassenziel_test
+          MARIADB_USER: klassenziel
+          MARIADB_PASSWORD: pruefung
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    defaults:
+      run:
+        working-directory: src
+
+    env:
+      TEST_DB_HOST: 127.0.0.1
+      TEST_DB_PORT: '3306'
+      TEST_DB_NAME: db_klassenziel_test
+      TEST_DB_USER: klassenziel
+      TEST_DB_PASS: pruefung
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Dieselbe Version wie im Dockerfile. Kein composer install: src/vendor/
+      # liegt im Repo, geprueft wird genau der Stand, der ins Abbild kommt.
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, sodium, mbstring, curl
+          coverage: none
+          tools: none
+
+      - name: Syntax
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 \
+            | xargs -0 -n1 -P4 php -l > /dev/null
+
+      - run: php vendor/bin/phpunit --no-progress
+      - run: php vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+  abbild:
+    name: Docker-Abbild
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - run: docker build -t klassenziel:pruefung .
+
+      # Startet das Abbild ohne Datenbank: Apache muss trotzdem laufen und
+      # das Lebenszeichen ehrlich "datenbank" melden statt abzustuerzen.
+      - name: Start ohne Datenbank
+        run: |
+          docker run -d --name kz -p 8080:80 -e AUTO_MIGRATE=0 -e DB_STARTVERSUCHE=1 \
+            -e KLASSENZIEL_SCHLUESSEL="$(openssl rand -base64 32)" klassenziel:pruefung
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/healthz || true)
+            [ "$code" = "503" ] && exit 0
+            sleep 1
+          done
+          docker logs kz
+          exit 1
+
+      - name: Kein echter Export im Repository
+        run: |
+          if git ls-files | grep -Ei 'ClassregEventPerKlasse|\.(csv|tsv|xlsx?)$' | grep -v '^src/tests/daten/'; then
+            echo "Ein Export oder eine Tabelle liegt im Repository - das darf nicht sein." >&2
+            exit 1
+          fi

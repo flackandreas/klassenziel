@@ -1,0 +1,17 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Klasse anlegen{% endblock %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › Klasse anlegen</p>
+<h1>Klasse anlegen</h1>
+
+<form class="karte" method="post" action="/klassen/neu" novalidate>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% include "_klasse_formular.twig" %}
+    <div class="aktionen">
+        <button class="knopf" type="submit">Anlegen</button>
+        <a href="/">Abbrechen</a>
+    </div>
+</form>
+{% endblock %}

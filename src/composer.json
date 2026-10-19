@@ -1,0 +1,51 @@
+{
+    "name": "schulos/klassenziel",
+    "description": "SchulOS-Modul Klassenziel: eine Klasse verdient sich gemeinsam eine Belohnung, sichtbar als Punktestand aus dem Klassenbuch - ohne Namen.",
+    "type": "project",
+    "license": "proprietary",
+    "repositories": [
+        {
+            "comment": "Gemeinsamer OpenID-Connect-Client der SchulOS-Module. HTTPS statt SSH, damit die CI ohne hinterlegten Schluessel an das oeffentliche Paket kommt.",
+            "type": "vcs",
+            "url": "https://github.com/flackandreas/schulos-sso.git"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-sodium": "*",
+        "twig/twig": "^3.23",
+        "vlucas/phpdotenv": "^5.6",
+        "schulos/sso": "^1.0",
+        "symfony/polyfill-intl-normalizer": "^1.31"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan": "^2.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Klassenziel\\": "app/"
+        },
+        "files": [
+            "app/Support/helfer.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Klassenziel\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse"
+    }
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block titel %}Klassenziel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ datei('/css/verwaltung.css') }}">
+    <link rel="icon" href="{{ datei('/favicon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+<div class="huelle huelle--schmal">
+    <main>
+    {% block inhalt %}{% endblock %}
+    </main>
+    <footer class="fusszeile">
+        Nur lesen · Einträge ohne Namen · <a href="/datenschutz">Hinweise zum Datenschutz</a>
+    </footer>
+</div>
+</body>
+</html>

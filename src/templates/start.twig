@@ -1,0 +1,42 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Meine Klassen{% endblock %}
+
+{% block inhalt %}
+<div class="seitenkopf">
+    <div>
+        <h1>{{ konto.istVerwaltung ? 'Alle Klassen' : 'Meine Klassen' }}</h1>
+        <p class="leise">Eine Klasse verdient sich über das Schuljahr gemeinsam eine Belohnung – sichtbar als Punktestand aus dem Klassenbuch, ohne Namen.</p>
+    </div>
+    <a class="knopf" href="/klassen/neu">Klasse anlegen</a>
+</div>
+
+{% if klassen is empty %}
+    <section class="karte leer">
+        <h2>Noch keine Klasse</h2>
+        <p>Legen Sie Ihre Klasse an: Name, Kürzel aus dem WebUntis-Export, Belohnung und Stichtag. Danach bekommt sie einen Link für Klasse und Eltern.</p>
+        {% if not konto.istVerwaltung %}
+        <p class="leise">Gibt es Ihre Klasse schon? Dann kann die Verwaltung Sie dort als zuständig eintragen.</p>
+        {% endif %}
+    </section>
+{% else %}
+    <ul class="klassenliste">
+    {% for klasse in klassen %}
+        <li class="karte klassenliste__eintrag{% if klasse.istArchiviert %} klassenliste__eintrag--archiv{% endif %}">
+            <a href="/klassen/{{ klasse.id }}">
+                <span class="klassenliste__name">{{ klasse.anzeigename }}</span>
+                <span class="klassenliste__ziel">Ziel: {{ klasse.belohnung }}</span>
+                <span class="klassenliste__info">
+                    {{ klasse.exportKuerzel }} · {{ klasse.schuljahr }}
+                    {% if klasse.istArchiviert %} · archiviert{% elseif klasse.stichtag %} · Stichtag {{ klasse.stichtag|date('d.m.Y') }}{% else %} · Stichtag noch offen{% endif %}
+                </span>
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+<p class="leise">
+    {% if mit_archiv %}<a href="/">Archivierte Klassen ausblenden</a>{% else %}<a href="/?archiv=1">Archivierte Klassen zeigen</a>{% endif %}
+</p>
+{% endblock %}

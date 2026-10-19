@@ -1,0 +1,68 @@
+# Klassenziel allein, fuer Entwicklung und Tests.
+#
+#   cp .env.example .env      # Schluessel eintragen
+#   docker compose up -d --build
+#   docker compose exec web composer test
+#
+# Im SchulOS-Verbund laeuft Klassenziel nicht ueber diese Datei, sondern ueber
+# compose.yml bzw. pi/compose.pi.yml im Repository schulos-portal. Ohne Portal
+# gibt es keine Anmeldung: Klassenziel hat bewusst keine eigene. Hier laufen
+# deshalb die Tests, die oeffentliche Ansicht und der Lebenszeichen-Endpunkt.
+
+name: klassenziel
+
+services:
+  web:
+    build: .
+    ports:
+      # Nur auf dem eigenen Rechner erreichbar.
+      - "127.0.0.1:${KLASSENZIEL_PORT:-8893}:80"
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      APP_URL: ${APP_URL:-http://localhost:8893}
+      APP_ENV: ${APP_ENV:-development}
+      DB_HOST: db
+      DB_NAME: db_klassenziel
+      DB_USER: klassenziel
+      DB_PASS: ${DB_PASS:-entwicklung}
+      KLASSENZIEL_SCHLUESSEL: ${KLASSENZIEL_SCHLUESSEL:?KLASSENZIEL_SCHLUESSEL fehlt - siehe .env.example}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      # Eigene Datenbank fuer die Integrationstests: sie leeren sie bei jedem
+      # Lauf und duerfen die Entwicklungsdaten nicht anfassen.
+      TEST_DB_HOST: db
+      TEST_DB_NAME: db_klassenziel_test
+      TEST_DB_USER: klassenziel
+      TEST_DB_PASS: ${DB_PASS:-entwicklung}
+    volumes:
+      # Zum Entwickeln eingehaengt; im Betrieb liegt der Code im Abbild.
+      - ./src:/var/www/html
+    # PHP legt hochgeladene Dateien und Sitzungen unter /tmp ab. Ein Export
+    # enthaelt Schuelernamen - er soll nie auf einer Platte landen, auch nicht
+    # fuer die Dauer einer Anfrage.
+    tmpfs:
+      - /tmp
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:10.11
+    environment:
+      # NOW() folgt der Uhr des Containers; ohne TZ waere das UTC.
+      TZ: ${TZ:-Europe/Berlin}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-entwicklung-root}
+      MARIADB_DATABASE: db_klassenziel
+      MARIADB_USER: klassenziel
+      MARIADB_PASSWORD: ${DB_PASS:-entwicklung}
+    volumes:
+      - db-daten:/var/lib/mysql
+      - ./docker/testdatenbank.sql:/docker-entrypoint-initdb.d/10-test.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    # Kein veroeffentlichter Port.
+
+volumes:
+  db-daten:

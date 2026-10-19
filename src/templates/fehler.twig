@@ -1,0 +1,11 @@
+{% extends "oeffentlich.twig" %}
+
+{% block titel %}{{ titel }}{% endblock %}
+
+{% block inhalt %}
+<section class="karte karte--fehler">
+    <h1>{{ titel }}</h1>
+    <p>{{ text }}</p>
+    {% if zurueck %}<p><a class="knopf" href="{{ zurueck }}">Zurück</a></p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.*
+**/.DS_Store
+src/.env
+src/storage/*
+!src/storage/.gitignore
+src/.phpunit.result.cache
+.phpunit.cache
+# Nie ein echter Export im Abbild, auch nicht aus Versehen.
+ClassregEventPerKlasse_*
+*.xlsx
+*.xls

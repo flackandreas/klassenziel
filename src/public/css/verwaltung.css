@@ -1,0 +1,261 @@
+/*
+ * Lehrerbereich von Klassenziel.
+ *
+ * Alles in dieser Datei, kein einziges style-Attribut in den Vorlagen: die
+ * Content-Security-Policy erlaubt kein 'unsafe-inline'.
+ *
+ * Farben aus den Design-Tokens der Planung (Abschnitt 8). Positiv und negativ
+ * unterscheiden sich in Farbe UND Vorzeichen - Blau/Orange statt Rot/Gruen.
+ */
+
+:root {
+    color-scheme: light;
+
+    --grund: #F4F6F8;
+    --karte: #FFFFFF;
+    --text: #13222E;
+    --text-leise: #4B5966;
+    --linie: #E3E8EE;
+    --balken-grund: #DCE3EA;
+    --blau: #1C64A8;
+    --blau-dunkel: #144C82;
+    --positiv-grund: #E3EEF8;
+    --positiv-text: #1C64A8;
+    --negativ-grund: #FBEBDD;
+    --negativ-text: #A84A08;
+    --dunkel: #13222E;
+    --dunkel-text: #FFFFFF;
+    --dunkel-leise: #C9D3DC;
+    --gefahr: #B42318;
+    --gefahr-grund: #FDECEA;
+    --erfolg-grund: #E6F4EA;
+    --erfolg-text: #1E6B3A;
+
+    --radius: 16px;
+    --radius-klein: 10px;
+    --schatten: 0 1px 2px rgba(19, 34, 46, .05), 0 6px 20px rgba(19, 34, 46, .05);
+
+    --schrift-text: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --schrift-titel: 'Bricolage Grotesque', 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--grund);
+    color: var(--text);
+    font-family: var(--schrift-text);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--schrift-titel);
+    font-weight: 700;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+}
+
+h1 { font-size: 1.85rem; margin: 0 0 6px; }
+h2 { font-size: 1.2rem; margin: 0 0 12px; }
+
+a { color: var(--blau); }
+a:hover { color: var(--blau-dunkel); }
+
+:focus-visible { outline: 3px solid var(--blau); outline-offset: 2px; }
+
+code { font-size: .9em; background: var(--grund); padding: 1px 5px; border-radius: 4px; }
+
+.huelle { max-width: 980px; margin: 0 auto; padding: 16px 16px 56px; }
+.huelle--schmal { max-width: 640px; }
+
+.leise { color: var(--text-leise); }
+
+.unsichtbar {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* --- Kopf --- */
+
+.kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    padding: 12px 0 24px;
+}
+
+.marke { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.marke img { border-radius: 8px; }
+.marke__name { display: block; font-family: var(--schrift-titel); font-weight: 700; font-size: 1.2rem; line-height: 1.1; }
+.marke__zusatz { display: block; font-size: .8rem; color: var(--text-leise); }
+
+.kopf__rechts { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; font-size: .95rem; }
+.kopf__person { color: var(--text-leise); }
+
+.brotkrumen { margin: 0 0 8px; font-size: .9rem; color: var(--text-leise); }
+
+.seitenkopf {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.seitenkopf p { margin: 0; max-width: 60ch; }
+
+/* --- Karten --- */
+
+.karte {
+    background: var(--karte);
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
+    padding: 22px 24px;
+    margin: 0 0 18px;
+}
+.karte > :last-child { margin-bottom: 0; }
+.karte--schmal { max-width: 520px; }
+.karte--fehler { border-top: 4px solid var(--negativ-text); }
+.karte--gefahr { border: 1px solid #F3C7C2; }
+
+.leer { text-align: left; }
+
+.ueberzeile {
+    margin: 0 0 6px;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--text-leise);
+}
+
+/* --- Meldungen --- */
+
+.meldung {
+    border-radius: var(--radius-klein);
+    padding: 12px 16px;
+    margin: 0 0 18px;
+}
+.meldung--erfolg { background: var(--erfolg-grund); color: var(--erfolg-text); }
+.meldung--fehler { background: var(--gefahr-grund); color: var(--gefahr); }
+.meldung--hinweis { background: var(--positiv-grund); color: var(--text); }
+
+/* --- Klassenliste --- */
+
+.klassenliste {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.klassenliste__eintrag { padding: 0; margin: 0; }
+.klassenliste__eintrag a {
+    display: block;
+    padding: 18px 20px;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: var(--radius);
+}
+.klassenliste__eintrag a:hover { background: #FAFBFC; }
+.klassenliste__eintrag--archiv { opacity: .7; }
+.klassenliste__name { display: block; font-family: var(--schrift-titel); font-weight: 700; font-size: 1.15rem; }
+.klassenliste__ziel { display: block; margin: 2px 0 8px; }
+.klassenliste__info { display: block; font-size: .9rem; color: var(--text-leise); }
+
+.schlichtliste { list-style: none; padding: 0; margin: 0 0 14px; }
+.schlichtliste li { padding: 6px 0; border-bottom: 1px solid var(--linie); display: flex; gap: 12px; align-items: center; }
+.schlichtliste li:last-child { border-bottom: 0; }
+
+.angaben { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+.angaben dt { color: var(--text-leise); }
+.angaben dd { margin: 0; }
+
+/* --- Formulare --- */
+
+.formular-raster {
+    display: grid;
+    gap: 4px 20px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.feld { margin-bottom: 14px; }
+.feld label { display: block; font-weight: 700; margin-bottom: 4px; }
+
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    font: inherit;
+    color: var(--text);
+    background: #fff;
+    border: 1px solid #C5CFD9;
+    border-radius: var(--radius-klein);
+    padding: 9px 12px;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--blau); }
+.feld--fehler input { border-color: var(--gefahr); }
+
+.feld__hinweis { margin: 4px 0 0; font-size: .88rem; color: var(--text-leise); }
+.feld__fehler { margin: 4px 0 0; font-size: .88rem; color: var(--gefahr); }
+
+.aktionen {
+    display: flex;
+    align-items: center;
+    gap: 10px 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+.aktionen select, .aktionen input[type="text"] { width: auto; min-width: 200px; }
+
+.inline { display: inline; margin: 0; }
+
+.knopf {
+    display: inline-block;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--blau);
+    border: 0;
+    border-radius: var(--radius-klein);
+    padding: 10px 18px;
+    text-decoration: none;
+    cursor: pointer;
+}
+.knopf:hover { background: var(--blau-dunkel); color: #fff; }
+.knopf--zweit { background: var(--positiv-grund); color: var(--blau); }
+.knopf--zweit:hover { background: #D3E3F3; color: var(--blau-dunkel); }
+.knopf--warnung { background: var(--negativ-grund); color: var(--negativ-text); }
+.knopf--warnung:hover { background: #F6DCC4; color: #8A3C06; }
+.knopf--gefahr { background: var(--gefahr); }
+.knopf--gefahr:hover { background: #8F1C13; }
+
+.knopf-link {
+    font: inherit;
+    font-size: .9rem;
+    color: var(--gefahr);
+    background: none;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.linkfeld { display: flex; gap: 10px; margin: 12px 0 8px; }
+.linkfeld input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9rem; }
+
+/* --- Fusszeile --- */
+
+.fusszeile { margin-top: 36px; font-size: .88rem; color: var(--text-leise); }
+
+@media (max-width: 560px) {
+    h1 { font-size: 1.5rem; }
+    .karte { padding: 18px 16px; }
+    .linkfeld { flex-direction: column; }
+}

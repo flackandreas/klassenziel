@@ -1,0 +1,22 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Anmelden{% endblock %}
+
+{% block inhalt %}
+<section class="karte karte--schmal">
+    {% if abgemeldet and sso_aktiv %}
+        <h1>Abgemeldet</h1>
+        <p>Sie sind von Klassenziel abgemeldet.</p>
+        <p><a class="knopf" href="/sso/start?weiter={{ weiter|url_encode }}">Wieder anmelden</a></p>
+    {% elseif sso_aktiv %}
+        <h1>Anmelden</h1>
+        <p><a class="knopf" href="/sso/start?weiter={{ weiter|url_encode }}">Über das SchulOS-Portal anmelden</a></p>
+    {% else %}
+        <h1>Noch nicht eingerichtet</h1>
+        <p>Klassenziel hat keine eigene Anmeldung. Lehrkräfte melden sich über das SchulOS-Portal an –
+           und das ist für dieses Modul noch nicht eingerichtet (<code>PORTAL_ISSUER</code>,
+           <code>PORTAL_CLIENT_ID</code>, <code>PORTAL_CLIENT_SECRET</code>, <code>PORTAL_REDIRECT_URI</code>).</p>
+        <p class="leise">Die Klassenseiten hinter ihren Links funktionieren trotzdem.</p>
+    {% endif %}
+</section>
+{% endblock %}

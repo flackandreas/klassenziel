@@ -1,0 +1,27 @@
+{# Felder einer Klasse, fuer Anlegen und Bearbeiten. #}
+{% macro feld(name, bezeichnung, wert, fehler, typ = 'text', hinweis = '', extra = {}) %}
+<div class="feld{% if fehler[name] is defined %} feld--fehler{% endif %}">
+    <label for="feld-{{ name }}">{{ bezeichnung }}</label>
+    <input id="feld-{{ name }}" name="{{ name }}" type="{{ typ }}" value="{{ wert }}"
+        {% for attribut, inhalt in extra %} {{ attribut }}="{{ inhalt }}"{% endfor %}
+        {% if hinweis or fehler[name] is defined %}aria-describedby="hinweis-{{ name }}"{% endif %}>
+    {% if fehler[name] is defined %}
+        <p class="feld__fehler" id="hinweis-{{ name }}">{{ fehler[name] }}</p>
+    {% elseif hinweis %}
+        <p class="feld__hinweis" id="hinweis-{{ name }}">{{ hinweis }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% import _self as f %}
+
+<div class="formular-raster">
+    {{ f.feld('anzeigename', 'Anzeigename', daten.anzeigename, daten.fehler, 'text', 'So steht die Klasse auf der Seite, z. B. „Klasse 9d“.', {required: 'required', maxlength: 100}) }}
+    {{ f.feld('export_kuerzel', 'Kürzel im WebUntis-Export', daten.exportKuerzel, daten.fehler, 'text', 'Spalte „Klasse“ im Export, z. B. „R9d“.', {required: 'required', maxlength: 20, autocomplete: 'off', spellcheck: 'false'}) }}
+    {{ f.feld('schuljahr', 'Schuljahr', daten.schuljahr, daten.fehler, 'text', 'z. B. 2026/27', {required: 'required', pattern: '[0-9]{4}/[0-9]{2}', maxlength: 7}) }}
+    {{ f.feld('belohnung', 'Belohnung', daten.belohnung, daten.fehler, 'text', 'Erscheint als „Unser Ziel: …“, z. B. „Kanutour mit Übernachtung“.', {required: 'required', maxlength: 200}) }}
+    {{ f.feld('startdatum', 'Beginn der Wertung', daten.startdatum, daten.fehler, 'date', 'Einträge vor diesem Tag zählen nicht.', {required: 'required'}) }}
+    {{ f.feld('stichtag', 'Stichtag', daten.stichtag, daten.fehler, 'date', 'Bis dahin läuft der Countdown. Darf noch leer bleiben.') }}
+    {{ f.feld('startwert', 'Startwert', daten.startwert, daten.fehler, 'number', 'Punkte zu Beginn, von 100.', {required: 'required', min: 0, max: 100, step: 1, inputmode: 'numeric'}) }}
+    {{ f.feld('zielwert', 'Zielwert', daten.zielwert, daten.fehler, 'number', 'Ab diesem Stand ist das Ziel erreicht.', {required: 'required', min: 1, max: 100, step: 1, inputmode: 'numeric'}) }}
+</div>

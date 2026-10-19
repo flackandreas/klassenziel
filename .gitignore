@@ -1,0 +1,38 @@
+# Umgebung und Geheimnisse
+.env
+.env.*
+!.env.example
+*.secret
+
+# Exporte aus WebUntis enthalten Schuelernamen und Texte mit sensiblen
+# Einzelheiten. Sie gehoeren NIE ins Repository - das ist oeffentlich. Erlaubt
+# sind nur die erfundenen Testdateien unter src/tests/daten/.
+ClassregEventPerKlasse_*
+*.csv
+*.tsv
+*.xlsx
+*.xls
+!src/tests/daten/*.csv
+!src/tests/daten/*.tsv
+
+# Zur Laufzeit erzeugt: Zwischenspeicher fuer Vorlagen und Punktestand
+src/storage/*
+!src/storage/.gitignore
+
+# Composer: src/vendor/ bleibt bewusst versioniert, weil das Abbild kein
+# composer install ausfuehrt - wie im Portal und in den Modulen.
+vendor/
+!src/vendor/
+
+# Werkzeuge
+.phpunit.cache/
+.phpunit.result.cache
+src/.phpunit.result.cache
+
+# Betriebssystem und Editoren
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.log

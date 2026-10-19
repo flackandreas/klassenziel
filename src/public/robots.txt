@@ -1,0 +1,4 @@
+# Klassenziel gehoert in keine Suchmaschine. Die Klassenseiten tragen
+# zusaetzlich "X-Robots-Tag: noindex, nofollow".
+User-agent: *
+Disallow: /

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block titel %}Klassenziel{% endblock %} · Klassenziel</title>
+    <link rel="stylesheet" href="{{ datei('/css/verwaltung.css') }}">
+    <link rel="icon" href="{{ datei('/favicon.svg') }}" type="image/svg+xml">
+    <script src="{{ datei('/js/verwaltung.js') }}" defer></script>
+</head>
+<body>
+<div class="huelle">
+
+    <header class="kopf">
+        <a class="marke" href="/">
+            <img src="{{ datei('/favicon.svg') }}" alt="" width="30" height="30">
+            <span>
+                <span class="marke__name">Klassenziel</span>
+                <span class="marke__zusatz">SchulOS</span>
+            </span>
+        </a>
+        {% if konto %}
+        <nav class="kopf__rechts" aria-label="Hauptnavigation">
+            <a href="/">Meine Klassen</a>
+            {% if portal_adresse %}<a href="{{ portal_adresse }}/">Portal</a>{% endif %}
+            <span class="kopf__person">{{ konto.name }}{% if konto.istVerwaltung %} · Verwaltung{% endif %}</span>
+            <a href="/abmelden">Abmelden</a>
+        </nav>
+        {% endif %}
+    </header>
+
+    {% if meldung_erfolg %}<div class="meldung meldung--erfolg" role="status">{{ meldung_erfolg }}</div>{% endif %}
+    {% if meldung_fehler %}<div class="meldung meldung--fehler" role="alert">{{ meldung_fehler }}</div>{% endif %}
+
+    <main>
+    {% block inhalt %}{% endblock %}
+    </main>
+
+    <footer class="fusszeile">
+        Klassenziel · Einträge ohne Namen · <a href="/datenschutz">Hinweise zum Datenschutz</a>
+    </footer>
+</div>
+</body>
+</html>
