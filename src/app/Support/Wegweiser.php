@@ -20,6 +20,11 @@ final class Wegweiser
         '/abmelden' => 'abmelden.php',
         '/klassen/neu' => 'klasse_neu.php',
         '/import' => 'import.php',
+        '/verwaltung' => 'verwaltung.php',
+        '/verwaltung/ferien' => 'verwaltung_ferien.php',
+        '/verwaltung/faecher' => 'verwaltung_faecher.php',
+        '/verwaltung/textbausteine' => 'verwaltung_textbausteine.php',
+        '/verwaltung/vorgaben' => 'verwaltung_vorgaben.php',
         '/datenschutz' => 'datenschutz.php',
         '/sso/start' => 'sso_start.php',
         '/sso/rueckweg' => 'sso_rueckweg.php',
@@ -30,6 +35,9 @@ final class Wegweiser
     /** @var array<string,string> */
     private const MUSTER = [
         '#^/klassen/(?<id>[1-9][0-9]{0,8})$#' => 'klasse.php',
+        '#^/klassen/(?<id>[1-9][0-9]{0,8})/pruefliste$#' => 'pruefliste.php',
+        '#^/klassen/(?<id>[1-9][0-9]{0,8})/gewichtung$#' => 'gewichtung.php',
+        '#^/vorfaelle/(?<id>[1-9][0-9]{0,8})$#' => 'vorfall.php',
         '#^/import/(?<id>[1-9][0-9]{0,8})$#' => 'import_vorschau.php',
         '#^/klassenziel/(?<token>[A-Za-z0-9_-]{1,64})$#' => 'anzeige.php',
     ];

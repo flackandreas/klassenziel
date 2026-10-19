@@ -24,6 +24,7 @@
         <nav class="kopf__rechts" aria-label="Hauptnavigation">
             <a href="/">Meine Klassen</a>
             <a href="/import">Export einlesen</a>
+            <a href="/verwaltung">Einstellungen</a>
             {% if portal_adresse %}<a href="{{ portal_adresse }}/">Portal</a>{% endif %}
             <span class="kopf__person">{{ konto.name }}{% if konto.istVerwaltung %} · Verwaltung{% endif %}</span>
             <a href="/abmelden">Abmelden</a>

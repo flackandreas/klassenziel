@@ -1,0 +1,50 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Ferien{% endblock %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/verwaltung">Einstellungen</a> › Ferien</p>
+<h1>Ferien</h1>
+<p class="leise">Eine Woche, deren Montag bis Freitag vollständig in Ferien liegen, bekommt keinen Wochenbonus. Einzelne Ferientage in einer Schulwoche ändern daran nichts.</p>
+
+<section class="karte">
+    {% if ferien is empty %}
+        <p class="leise">Noch keine Ferien eingetragen.</p>
+    {% else %}
+    <div class="tabelle-huelle">
+    <table class="tabelle">
+        <thead><tr><th>Bezeichnung</th><th>von</th><th>bis</th><th></th></tr></thead>
+        <tbody>
+        {% for f in ferien %}
+            <tr>
+                <td>{{ f.bezeichnung }}</td>
+                <td>{{ f.von|date('d.m.Y') }}</td>
+                <td>{{ f.bis|date('d.m.Y') }}</td>
+                <td>
+                    <form method="post" action="/verwaltung/ferien" class="inline">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        <input type="hidden" name="aktion" value="entfernen">
+                        <input type="hidden" name="id" value="{{ f.id }}">
+                        <button class="knopf-link" type="submit">entfernen</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</section>
+
+<form class="karte" method="post" action="/verwaltung/ferien">
+    <h2>Zeitraum eintragen</h2>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if fehler %}<p class="feld__fehler" role="alert">{{ fehler }}</p>{% endif %}
+    <div class="formular-raster">
+        <div class="feld"><label for="bezeichnung">Bezeichnung</label><input id="bezeichnung" name="bezeichnung" type="text" maxlength="100" value="{{ eingabe.bezeichnung }}" placeholder="Herbstferien"></div>
+        <div class="feld"><label for="von">von</label><input id="von" name="von" type="date" value="{{ eingabe.von }}"></div>
+        <div class="feld"><label for="bis">bis</label><input id="bis" name="bis" type="date" value="{{ eingabe.bis }}"></div>
+    </div>
+    <div class="aktionen"><button class="knopf" type="submit">Eintragen</button></div>
+</form>
+{% endblock %}

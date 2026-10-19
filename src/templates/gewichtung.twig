@@ -1,0 +1,94 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Gewichtung · {{ klasse.anzeigename }}{% endblock %}
+
+{% set auswahlen = [
+    {'wert': 'negativ:klein', 'name': 'negativ, klein'},
+    {'wert': 'negativ:mittel', 'name': 'negativ, mittel'},
+    {'wert': 'negativ:gross', 'name': 'negativ, groß'},
+    {'wert': 'positiv:klein', 'name': 'positiv, klein'},
+    {'wert': 'positiv:mittel', 'name': 'positiv, mittel'},
+    {'wert': 'positiv:gross', 'name': 'positiv, groß'},
+    {'wert': 'neutral', 'name': 'neutral (zählt nicht)'},
+    {'wert': 'pruefen', 'name': 'in die Prüfliste'}
+] %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/klassen/{{ klasse.id }}">{{ klasse.anzeigename }}</a> › Gewichtung</p>
+<h1>Gewichtung und Simulation</h1>
+<p class="leise">Der Punktestand wird jedes Mal neu berechnet – eine Änderung wirkt sofort und rückwirkend auf das ganze Schuljahr.
+   Deshalb erst die Vorschau ansehen, dann speichern.</p>
+
+<section class="karte" aria-labelledby="titel-verlauf">
+    <h2 id="titel-verlauf">{{ simulation ? 'Vorschau: bisher und neu' : 'Verlauf mit den aktuellen Werten' }}</h2>
+    <dl class="kennzahlen">
+        <div><dt>{{ simulation ? 'Stand heute bisher' : 'Stand heute' }}</dt><dd>{{ bisher.stand }}</dd></div>
+        {% if simulation %}<div><dt>Stand heute neu</dt><dd>{{ simulation.stand }}</dd></div>{% endif %}
+        <div><dt>Ziel</dt><dd>{{ klasse.zielwert }}</dd></div>
+        <div><dt>Start</dt><dd>{{ klasse.startwert }}</dd></div>
+    </dl>
+    {% if grafik %}
+        {% include "_verlauf.twig" %}
+    {% else %}
+        <p class="leise">Noch kein Verlauf – die Wertung beginnt am {{ klasse.startdatum|date('d.m.Y') }}.</p>
+    {% endif %}
+</section>
+
+{% if fehler.vorschau is defined %}<div class="meldung meldung--hinweis" role="status">{{ fehler.vorschau }}</div>{% endif %}
+
+<form class="karte" method="post" action="/klassen/{{ klasse.id }}/gewichtung" novalidate>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Punkte je Stufe</h2>
+    <p class="leise">Positive Einträge addieren, negative ziehen ab – mit denselben Punkten.</p>
+    <div class="formular-raster formular-raster--schmal">
+        {% for feld, name in {'klein': 'klein', 'mittel': 'mittel', 'gross': 'groß'} %}
+        <div class="feld{% if fehler[feld] is defined %} feld--fehler{% endif %}">
+            <label for="feld-{{ feld }}">{{ name }}</label>
+            <input id="feld-{{ feld }}" name="{{ feld }}" type="number" min="0" max="20" step="1" inputmode="numeric" value="{{ eingabe[feld] }}">
+            {% if fehler[feld] is defined %}<p class="feld__fehler">{{ fehler[feld] }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="feld{% if fehler.wochenbonus is defined %} feld--fehler{% endif %}">
+            <label for="feld-wochenbonus">Wochenbonus</label>
+            <input id="feld-wochenbonus" name="wochenbonus" type="number" min="0" max="20" step="1" inputmode="numeric" value="{{ eingabe.wochenbonus }}" aria-describedby="hinweis-bonus">
+            {% if fehler.wochenbonus is defined %}<p class="feld__fehler">{{ fehler.wochenbonus }}</p>{% else %}
+            <p class="feld__hinweis" id="hinweis-bonus">Für jede Schulwoche ohne großen negativen Eintrag; 0 schaltet ihn ab.</p>{% endif %}
+        </div>
+    </div>
+
+    <h2>Kategorien aus WebUntis</h2>
+    <p class="leise">Wie ein Eintrag zählt, wenn Sie ihn nicht selbst einstufen. Einträge der Gruppe „Inf. / neutral“ zählen nie.</p>
+    {% if fehler.kategorie is defined %}<p class="feld__fehler">{{ fehler.kategorie }}</p>{% endif %}
+    <div class="tabelle-huelle">
+    <table class="tabelle">
+        <thead><tr><th>Kategorie</th><th class="zahl">Vorfälle</th><th>Wertung für diese Klasse</th></tr></thead>
+        <tbody>
+        {% for k in kategorien %}
+            <tr>
+                <td><label for="kat-{{ loop.index }}">{{ k.kategorie }}</label><input type="hidden" name="kategorie_name[{{ loop.index }}]" value="{{ k.kategorie }}"></td>
+                <td class="zahl">{{ k.vorfaelle }}</td>
+                <td>
+                    <select id="kat-{{ loop.index }}" name="kategorie[{{ loop.index }}]">
+                        <option value=""{% if (eingabe.kategorien[k.kategorie] ?? '') == '' %} selected{% endif %}>wie die Schulvorgabe ({{ bewertung_text(k.vorgabe_richtung, k.vorgabe_stufe) }})</option>
+                        {% for a in auswahlen %}
+                            <option value="{{ a.wert }}"{% if (eingabe.kategorien[k.kategorie] ?? '') == a.wert %} selected{% endif %}>{{ a.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <div class="aktionen">
+        <button class="knopf {{ simulation ? 'knopf--zweit' : '' }}" type="submit" name="aktion" value="vorschau">Vorschau berechnen</button>
+        {% if simulation %}
+            <input type="hidden" name="gesehen" value="{{ eingabe.pruefsumme }}">
+            <button class="knopf" type="submit" name="aktion" value="speichern">Diese Werte speichern</button>
+        {% else %}
+            <span class="leise">Speichern geht nach der Vorschau.</span>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

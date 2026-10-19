@@ -1,0 +1,50 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Textbausteine{% endblock %}
+
+{% set richtungen = {'negativ': 'Negativ', 'positiv': 'Positiv', 'neutral': 'Neutral'} %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/verwaltung">Einstellungen</a> › Textbausteine</p>
+<h1>Textbausteine</h1>
+<p class="leise">Vorschläge für neutrale Kurztexte. Sie erscheinen in der Prüfliste zum Anklicken – ohne Namen, ohne Einzelheiten.</p>
+
+{% for richtung, name in richtungen %}
+<section class="karte">
+    <h2>{{ name }}</h2>
+    {% set liste = bausteine|filter(b => b.richtung == richtung) %}
+    {% if liste is empty %}
+        <p class="leise">Keine.</p>
+    {% else %}
+    <ul class="schlichtliste">
+        {% for b in liste %}
+        <li>
+            {{ b.text }}
+            <form method="post" action="/verwaltung/textbausteine" class="inline">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <input type="hidden" name="aktion" value="entfernen">
+                <input type="hidden" name="id" value="{{ b.id }}">
+                <button class="knopf-link" type="submit">entfernen</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endfor %}
+
+<form class="karte" method="post" action="/verwaltung/textbausteine">
+    <h2>Textbaustein hinzufügen</h2>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if fehler %}<p class="feld__fehler" role="alert">{{ fehler }}</p>{% endif %}
+    <div class="aktionen">
+        <label for="richtung" class="unsichtbar">Richtung</label>
+        <select id="richtung" name="richtung">
+            {% for richtung, name in richtungen %}<option value="{{ richtung }}">{{ name }}</option>{% endfor %}
+        </select>
+        <label for="text" class="unsichtbar">Text</label>
+        <input id="text" name="text" type="text" maxlength="120" placeholder="z. B. Hausaufgaben vergessen">
+        <button class="knopf" type="submit">Hinzufügen</button>
+    </div>
+</form>
+{% endblock %}

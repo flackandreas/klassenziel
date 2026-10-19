@@ -37,7 +37,11 @@ final class VorlagenTest extends TestCase
     public function testAlleVorlagenLassenSichUebersetzen(): void
     {
         $twig = new Environment(new FilesystemLoader(dirname(__DIR__, 2) . '/templates'), ['cache' => false]);
+        // Die zur Laufzeit registrierten Erweiterungen (Kern::twig) als Attrappen.
         $twig->addFunction(new TwigFunction('datei', static fn (string $p): string => $p));
+        $twig->addFunction(new TwigFunction('bewertung_text', static fn (string $r, ?string $s): string => ''));
+        $twig->addFunction(new TwigFunction('stufenname', static fn (?string $s): string => ''));
+        $twig->addFilter(new \Twig\TwigFilter('punkte', static fn (int $p): string => (string) $p));
 
         $vorlagen = self::vorlagen();
         self::assertNotEmpty($vorlagen);

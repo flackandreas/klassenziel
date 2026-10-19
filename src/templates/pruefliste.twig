@@ -1,0 +1,68 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Prüfliste · {{ klasse.anzeigename }}{% endblock %}
+
+{% set statusnamen = {
+    'offen': 'offen',
+    'zuordnung_pruefen': 'Zuordnung prüfen',
+    'freigegeben': 'freigegeben',
+    'ohne_text': 'ohne Text',
+    'ignoriert': 'ignoriert'
+} %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/klassen/{{ klasse.id }}">{{ klasse.anzeigename }}</a> › {{ auswahl == 'alle' ? 'Alle Vorfälle' : 'Prüfliste' }}</p>
+
+<div class="seitenkopf">
+    <div>
+        <h1>{{ auswahl == 'alle' ? 'Alle Vorfälle' : 'Prüfliste' }}</h1>
+        <p class="leise">
+            {% if auswahl == 'alle' %}
+                Jede Entscheidung lässt sich hier nachträglich ändern.
+            {% else %}
+                {{ offen }} {{ offen == 1 ? 'Vorfall wartet' : 'Vorfälle warten' }} auf Ihre Entscheidung: einstufen, Kurztext freigeben, ohne Text zählen oder ignorieren.
+                Vorfälle mit bekannter Kategorie zählen schon jetzt; ohne Kategorie erst nach dem Einstufen.
+            {% endif %}
+        </p>
+    </div>
+    <a href="/klassen/{{ klasse.id }}/pruefliste{{ auswahl == 'alle' ? '' : '?alle=1' }}">{{ auswahl == 'alle' ? 'Nur offene zeigen' : 'Alle Vorfälle zeigen' }}</a>
+</div>
+
+{% if vorfaelle is empty %}
+    <section class="karte">
+        <p>{{ auswahl == 'alle' ? 'Noch keine Vorfälle eingelesen.' : 'Nichts offen. Alles entschieden.' }}</p>
+        <p><a class="knopf" href="/import">Export einlesen</a></p>
+    </section>
+{% else %}
+<ol class="vorfallliste">
+{% for v in vorfaelle %}
+    <li class="karte vorfallliste__eintrag">
+        <a href="/vorfaelle/{{ v.id }}" class="vorfallliste__link">
+            <span class="vorfallliste__kopf">
+                <span>{{ v.datum|date('d.m.Y') }} · {{ v.fach_klartext ?: (v.fach_kuerzel ?: 'ohne Fach') }}</span>
+                <span class="vorfallliste__marken">
+                    {% if v.wirksam.zaehlt %}
+                        <span class="marke-klein marke-klein--{{ v.wirksam.richtung }}">{{ v.punkte|punkte }} · {{ stufenname(v.wirksam.stufe) }}</span>
+                    {% else %}
+                        <span class="marke-klein marke-klein--{{ v.wirksam.richtung in ['positiv', 'negativ', 'neutral'] ? v.wirksam.richtung : 'pruefen' }}">
+                            {{ v.wirksam.richtung == 'pruefen' ? 'noch einzustufen' : 'zählt nicht' }}
+                        </span>
+                    {% endif %}
+                    <span class="marke-klein marke-klein--status">{{ statusnamen[v.status] ?? v.status }}</span>
+                </span>
+            </span>
+            <span class="vorfallliste__kategorie">
+                {{ v.webuntis_kategorie ?: 'ohne Kategorie' }} ·
+                {% if v.klasseneintrag and v.anzahl_beteiligte == 0 %}ganze Klasse{% else %}{{ v.anzahl_beteiligte }} {{ v.anzahl_beteiligte == 1 ? 'Beteiligte(r)' : 'Beteiligte' }}{% endif %}
+            </span>
+            {% if v.kurztext %}
+                <span class="vorfallliste__text">„{{ v.kurztext }}“</span>
+            {% elseif v.original_kurz %}
+                <span class="vorfallliste__original">{{ v.original_kurz }}</span>
+            {% endif %}
+        </a>
+    </li>
+{% endfor %}
+</ol>
+{% endif %}
+{% endblock %}

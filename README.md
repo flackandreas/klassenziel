@@ -9,10 +9,15 @@ Die Einträge erscheinen dort ohne Namen.
 Datenquelle ist der wöchentliche CSV-Export aus WebUntis, den die Klassenlehrkraft
 hochlädt.
 
-> **Stand:** Phase 2 von 5. Fertig sind Gerüst, Datenmodell, Anmeldung über das
-> Portal, Klassenverwaltung, geheimer Link und der Import des WebUntis-Exports.
-> Prüfliste, Wertung und die eigentliche Anzeige folgen; der Plan steht in
-> [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
+> **Stand:** Phase 3 von 5. Fertig sind:
+>
+> - Gerüst, Datenmodell, Anmeldung über das Portal
+> - Klassenverwaltung und geheimer Link
+> - Import des WebUntis-Exports
+> - Prüfliste, Gewichtung mit Simulation, Wochenbonus und Ferien
+>
+> Es folgen die öffentliche Anzeige (Beamer und Handy) sowie Datenschutz und
+> Betrieb; der Plan steht in [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md).
 
 ---
 
@@ -83,6 +88,34 @@ Die Regeln stehen in der Planung (Abschnitt 5). So setzt der Code sie um:
 Einträge der Kategoriegruppe „Inf. / neutral“ werden ohne Text gespeichert, nur
 damit sie nicht erneut auftauchen, und nie gezählt.
 
+### Wertung
+
+Der Punktestand wird nicht gespeichert, sondern bei jedem Abruf berechnet
+(`Wertung/Punkterechner`). Eine geänderte Gewichtung wirkt deshalb sofort und
+rückwirkend. Das Ergebnis liegt in `storage/cache/stand`. Der Schlüssel dieses
+Zwischenspeichers enthält `daten_version` der Klasse, den Stand der
+Schulvorgaben, den Tag und den Datenstand. Jede Änderung macht den alten Eintrag
+damit von selbst ungültig.
+
+- Start mit dem Startwert, dann alle zählenden Vorfälle chronologisch. Nach
+  jedem Schritt wird auf 0–100 begrenzt, nicht erst am Ende.
+- Es zählen Vorfälle vom Startdatum bis zum Stichtag. Ein Vorfall zählt einmal,
+  egal wie viele beteiligt waren.
+- Es zählen die Status offen (mit bekannter Kategorie), freigegeben und ohne
+  Text. Nicht zählen: ignoriert, „Zuordnung prüfen“, neutral und alles ohne
+  Einstufung.
+- Stufen ohne eigene Einstufung folgen der Kategorie-Zuordnung, auch einer
+  später geänderten.
+- **Wochenbonus** für jede Woche (Mo–So) ohne zählenden großen negativen
+  Vorfall. Er wird am Sonntag gutgeschrieben, nach den Vorfällen des Tages, und
+  nur wenn alle drei Bedingungen gelten:
+  - die Woche ist vorbei,
+  - sie ist vollständig eingelesen (der Datenstand liegt danach),
+  - sie ist keine Ferienwoche (Montag bis Freitag ganz in Ferien).
+- Die **Simulation** zeigt den Verlauf mit den neuen Werten neben dem bisherigen.
+  Gespeichert wird nur, was in der Vorschau zu sehen war: Der Knopf trägt eine
+  Prüfsumme der simulierten Werte.
+
 **Der Schlüssel `KLASSENZIEL_SCHLUESSEL` gehört in die Sicherung.** Ohne ihn
 sind die Originaltexte unlesbar, alle Links müssen neu erzeugt werden, und die
 Fingerabdrücke der Exportzeilen passen nicht mehr. Für diesen Fall liegt ein
@@ -139,6 +172,10 @@ mit dem eingebauten Server von PHP. Ohne `TEST_DB_NAME` werden sie übersprungen
 | `/` | meine Klassen |
 | `/klassen/neu`, `/klassen/{id}` | anlegen, bearbeiten, Link, Zuständigkeit, archivieren |
 | `/import`, `/import/{id}` | Export hochladen, Vorschau, bestätigen oder verwerfen, Protokoll |
+| `/klassen/{id}/pruefliste` (`?alle=1`) | offene Vorfälle, oder alle zum nachträglichen Ändern |
+| `/vorfaelle/{id}` | einstufen, Kurztext mit Namenswarnung, freigeben / ohne Text / ignorieren, teilen, zusammenführen |
+| `/klassen/{id}/gewichtung` | Stufenpunkte, Wochenbonus, Kategorie-Zuordnung, Simulation vor dem Speichern |
+| `/verwaltung/…` | Ferien, Fächer, Textbausteine; Vorgaben nur für die Verwaltung |
 | `/sso/start`, `/sso/rueckweg`, `/sso/abmelden`, `/abmelden` | Anmeldung über das Portal |
 | `/healthz` | Lebenszeichen für das Portal |
 

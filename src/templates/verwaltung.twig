@@ -1,0 +1,33 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Einstellungen{% endblock %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › Einstellungen</p>
+<h1>Einstellungen für die Schule</h1>
+<p class="leise">Gilt für alle Klassen. Was eine einzelne Klasse betrifft – Punkte, Wochenbonus, Kategorien –, steht auf deren Seite unter „Gewichtung“.</p>
+
+<ul class="klassenliste">
+    <li class="karte klassenliste__eintrag"><a href="/verwaltung/ferien">
+        <span class="klassenliste__name">Ferien</span>
+        <span class="klassenliste__ziel">Wochen ganz in den Ferien bekommen keinen Wochenbonus.</span>
+        <span class="klassenliste__info">{{ ferien }} {{ ferien == 1 ? 'Zeitraum' : 'Zeiträume' }} eingetragen</span>
+    </a></li>
+    <li class="karte klassenliste__eintrag"><a href="/verwaltung/faecher">
+        <span class="klassenliste__name">Fächer</span>
+        <span class="klassenliste__ziel">Klartext für die Kürzel aus dem Export, etwa „M-G“ → „Mathematik“.</span>
+        <span class="klassenliste__info">{% if faecher_offen > 0 %}{{ faecher_offen }} ohne Klartext{% else %}alle benannt{% endif %}</span>
+    </a></li>
+    <li class="karte klassenliste__eintrag"><a href="/verwaltung/textbausteine">
+        <span class="klassenliste__name">Textbausteine</span>
+        <span class="klassenliste__ziel">Vorschläge für neutrale Kurztexte in der Prüfliste.</span>
+    </a></li>
+    {% if konto.istVerwaltung %}
+    <li class="karte klassenliste__eintrag"><a href="/verwaltung/vorgaben">
+        <span class="klassenliste__name">Vorgaben</span>
+        <span class="klassenliste__ziel">Startwerte für neue Klassen und wie WebUntis-Kategorien zählen.</span>
+        <span class="klassenliste__info">{% if kategorien_offen > 0 %}{{ kategorien_offen }} {{ kategorien_offen == 1 ? 'Kategorie' : 'Kategorien' }} noch nicht zugeordnet{% else %}alle Kategorien zugeordnet{% endif %}</span>
+    </a></li>
+    {% endif %}
+</ul>
+{% endblock %}

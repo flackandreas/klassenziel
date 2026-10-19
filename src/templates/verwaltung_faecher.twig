@@ -1,0 +1,31 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Fächer{% endblock %}
+
+{% block inhalt %}
+<p class="brotkrumen"><a href="/">Meine Klassen</a> › <a href="/verwaltung">Einstellungen</a> › Fächer</p>
+<h1>Fächer</h1>
+<p class="leise">Die Kürzel trägt der Import von selbst ein. Ohne Klartext steht auf der Klassenseite das Kürzel.</p>
+
+{% if faecher is empty %}
+    <section class="karte"><p class="leise">Noch keine Fächer – sie erscheinen mit dem ersten Import.</p></section>
+{% else %}
+<form class="karte" method="post" action="/verwaltung/faecher">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="tabelle-huelle">
+    <table class="tabelle">
+        <thead><tr><th>Kürzel</th><th>Klartext</th></tr></thead>
+        <tbody>
+        {% for f in faecher %}
+            <tr>
+                <td><label for="fach-{{ loop.index }}"><code>{{ f.kuerzel }}</code></label></td>
+                <td><input id="fach-{{ loop.index }}" name="klartext[{{ f.kuerzel }}]" type="text" maxlength="100" value="{{ f.klartext }}" placeholder="z. B. Mathematik"></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    <div class="aktionen"><button class="knopf" type="submit">Speichern</button></div>
+</form>
+{% endif %}
+{% endblock %}

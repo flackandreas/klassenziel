@@ -286,6 +286,104 @@ input:focus, select:focus, textarea:focus { border-color: var(--blau); }
 .marke-klein--neutral { background: var(--grund); color: var(--text-leise); }
 .marke-klein--pruefen { background: #FFF4CC; color: #6B4E00; }
 
+.marke-klein--status { background: transparent; color: var(--text-leise); border: 1px solid var(--linie); }
+
+.klein { font-size: .88rem; }
+.karte--hinweis { border-left: 4px solid #E0B400; }
+
+textarea { min-height: 90px; resize: vertical; }
+.formular-raster--schmal { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.zahlfeld { width: 90px !important; min-width: 0 !important; }
+
+/* --- Pruefliste --- */
+
+.vorfallliste { list-style: none; margin: 0; padding: 0; }
+.vorfallliste__eintrag { padding: 0; margin-bottom: 12px; }
+.vorfallliste__link { display: block; padding: 16px 20px; color: var(--text); text-decoration: none; border-radius: var(--radius); }
+.vorfallliste__link:hover { background: #FAFBFC; }
+.vorfallliste__kopf { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; font-weight: 700; }
+.vorfallliste__marken { display: flex; gap: 6px; flex-wrap: wrap; }
+.vorfallliste__kategorie { display: block; font-size: .9rem; color: var(--text-leise); margin: 2px 0 6px; }
+.vorfallliste__text { display: block; }
+.vorfallliste__original { display: block; color: var(--text-leise); font-size: .92rem; }
+
+/* --- Vorfall --- */
+
+.originaltext {
+    margin: 0 0 8px;
+    padding: 12px 16px;
+    background: var(--grund);
+    border-left: 4px solid var(--balken-grund);
+    border-radius: var(--radius-klein);
+    white-space: normal;
+}
+
+fieldset.feld { border: 0; padding: 0; margin: 0 0 14px; }
+fieldset.feld legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.wahl { display: flex; flex-wrap: wrap; gap: 8px; }
+.wahl__punkt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #C5CFD9;
+    border-radius: var(--radius-klein);
+    cursor: pointer;
+}
+.wahl__punkt:has(input:checked) { border-color: var(--blau); background: var(--positiv-grund); }
+
+.bausteine { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.baustein {
+    font: inherit;
+    font-size: .88rem;
+    border: 1px solid var(--linie);
+    background: var(--karte);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+.baustein:hover { border-color: var(--blau); }
+.baustein--negativ { border-left: 3px solid var(--negativ-text); }
+.baustein--positiv { border-left: 3px solid var(--positiv-text); }
+
+/* --- Verlaufsgrafik --- */
+
+.verlauf-huelle { margin: 0; }
+/* Unter 560 px Breite scrollt die Grafik, statt die Beschriftung unter
+   12 px zu schrumpfen. */
+.verlauf-flaeche { position: relative; overflow-x: auto; }
+.verlauf { display: block; width: 100%; min-width: 560px; height: auto; font-family: var(--schrift-text); }
+.verlauf:focus-visible { outline: 3px solid var(--blau); outline-offset: 4px; }
+.verlauf__flaeche { cursor: crosshair; }
+
+.legende { list-style: none; display: flex; gap: 18px; margin: 0 0 8px; padding: 0; font-size: .92rem; color: var(--text-leise); }
+.legende li { display: inline-flex; align-items: center; gap: 6px; }
+.legende__linie { display: inline-block; width: 18px; height: 2px; border-radius: 1px; }
+.legende__linie--neu, .legende__linie--aktuell { background: #1C64A8; }
+.legende__linie--bisher { background: #15896A; }
+
+.verlauf-tooltip {
+    position: absolute;
+    top: 6px;
+    transform: translateX(12px);
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: var(--radius-klein);
+    box-shadow: var(--schatten);
+    padding: 8px 10px;
+    font-size: .88rem;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.verlauf-tooltip--links { transform: translateX(calc(-100% - 12px)); }
+.verlauf-tooltip__datum { color: var(--text-leise); margin-bottom: 2px; }
+.verlauf-tooltip__zeile { display: flex; align-items: center; gap: 6px; }
+.verlauf-tooltip__linie { display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
+
+.tabellenansicht { margin-top: 10px; }
+.tabellenansicht summary { cursor: pointer; color: var(--blau); }
+
 /* --- Fusszeile --- */
 
 .fusszeile { margin-top: 36px; font-size: .88rem; color: var(--text-leise); }

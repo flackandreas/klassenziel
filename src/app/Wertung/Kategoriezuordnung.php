@@ -57,6 +57,20 @@ final class Kategoriezuordnung
         return ['richtung' => $richtung, 'stufe' => $richtung === 'neutral' ? null : $eintrag['stufe']];
     }
 
+    /**
+     * Fuer die Simulation: dieselbe Zuordnung, aber mit den Werten aus dem
+     * Formular statt der gespeicherten fuer diese Klasse.
+     *
+     * @param array<string, array{richtung: string, stufe: ?string}> $zuordnungen
+     */
+    public function mitKlasse(int $klasseId, array $zuordnungen): self
+    {
+        $kopie = clone $this;
+        $kopie->klassen[$klasseId] = $zuordnungen;
+
+        return $kopie;
+    }
+
     public static function istNeutraleGruppe(string $kategoriegruppe): bool
     {
         return str_contains(mb_strtolower($kategoriegruppe), 'neutral');

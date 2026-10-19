@@ -5,7 +5,13 @@ declare(strict_types=1);
 namespace Klassenziel\Support;
 
 use Klassenziel\Import\Importdienst;
+use Klassenziel\Klassen\Klasse;
 use Klassenziel\Klassen\KlassenRepository;
+use Klassenziel\Klassen\Namensliste;
+use Klassenziel\Verwaltung\Stammdaten;
+use Klassenziel\Vorfaelle\VorfallRepository;
+use Klassenziel\Wertung\Einstellungen;
+use Klassenziel\Wertung\Standdienst;
 use Klassenziel\Konten\Konten;
 use Klassenziel\Konten\Konto;
 use Klassenziel\Sicherheit\Schluessel;
@@ -82,6 +88,46 @@ final class Kern
     public function importdienst(): Importdienst
     {
         return new Importdienst($this->db(), $this->schluessel(), $this->klassen());
+    }
+
+    public function vorfaelle(): VorfallRepository
+    {
+        return new VorfallRepository($this->db(), $this->schluessel());
+    }
+
+    public function standdienst(): Standdienst
+    {
+        return new Standdienst($this->db(), $this->ablage);
+    }
+
+    public function einstellungen(): Einstellungen
+    {
+        return new Einstellungen($this->db());
+    }
+
+    public function stammdaten(): Stammdaten
+    {
+        return new Stammdaten($this->db());
+    }
+
+    public function namensliste(): Namensliste
+    {
+        return new Namensliste($this->db(), $this->schluessel());
+    }
+
+    /**
+     * Die Klasse aus dem Pfad, wenn dieses Konto sie sehen darf - sonst das
+     * gemeinsame 404.
+     */
+    public function klasseAusPfad(Konto $konto): Klasse
+    {
+        $klasse = $this->klassen()->fuer($konto, (int) $this->parameter('id'));
+
+        if ($klasse === null) {
+            self::nichtGefunden();
+        }
+
+        return $klasse;
     }
 
     public function ratenbremse(): Ratenbremse
@@ -211,6 +257,21 @@ final class Kern
             // Ohne Version liefert ein Zwischenspeicher die alte Fassung weiter.
             return $pfad . '?v=' . $stand;
         }));
+
+        $twig->addFunction(new TwigFunction(
+            'bewertung_text',
+            static fn (string $richtung, ?string $stufe): string => \Klassenziel\Wertung\Bewertung::bezeichnung($richtung, $stufe)
+        ));
+        $twig->addFunction(new TwigFunction(
+            'stufenname',
+            static fn (?string $stufe): string => \Klassenziel\Wertung\Bewertung::stufenname($stufe)
+        ));
+
+        // Punkte mit Vorzeichen, das Minus typografisch (U+2212): "+3", "−1".
+        $twig->addFilter(new \Twig\TwigFilter(
+            'punkte',
+            static fn (int $punkte): string => $punkte > 0 ? '+' . $punkte : ($punkte < 0 ? "\u{2212}" . abs($punkte) : '0')
+        ));
 
         return $this->twig = $twig;
     }

@@ -1,0 +1,30 @@
+{# Verlaufsgrafik mit Legende und Tabelle. Erwartet: grafik (SVG), reihen. #}
+<figure class="verlauf-huelle">
+    {% if reihen|length > 1 %}
+    <ul class="legende" aria-label="Legende">
+        {% for r in reihen %}
+            <li><span class="legende__linie legende__linie--{{ r.name }}" aria-hidden="true"></span>{{ r.name }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="verlauf-flaeche">
+        {{ grafik|raw }}
+        <div class="verlauf-tooltip" role="status" aria-live="polite" hidden></div>
+    </div>
+    <details class="tabellenansicht">
+        <summary>Als Tabelle</summary>
+        <div class="tabelle-huelle">
+        <table class="tabelle">
+            <thead><tr><th>Woche bis</th>{% for r in reihen %}<th class="zahl">{{ r.name }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for i, punkt in reihen[0].punkte %}
+                <tr>
+                    <td>{{ punkt.datum|date('d.m.Y') }}</td>
+                    {% for r in reihen %}<td class="zahl">{{ r.punkte[i].stand }}</td>{% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </details>
+</figure>

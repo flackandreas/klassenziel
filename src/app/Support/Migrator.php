@@ -29,6 +29,7 @@ final class Migrator
         '004_wertung.sql',
         '005_vorfaelle.sql',
         '006_import.sql',
+        '007_stammdatenstand.sql',
     ];
 
     private readonly string $verzeichnis;

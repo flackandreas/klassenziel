@@ -1,0 +1,169 @@
+{% extends "grundlage.twig" %}
+
+{% block titel %}Vorfall vom {{ vorfall.datum|date('d.m.Y') }}{% endblock %}
+
+{% set statusnamen = {
+    'offen': 'offen',
+    'zuordnung_pruefen': 'Zuordnung prüfen',
+    'freigegeben': 'freigegeben',
+    'ohne_text': 'ohne Text gezählt',
+    'ignoriert': 'ignoriert'
+} %}
+{% set richtungen = {'positiv': 'Positiv', 'negativ': 'Negativ', 'neutral': 'Neutral (zählt nicht)'} %}
+{% set stufen = {'klein': 'klein', 'mittel': 'mittel', 'gross': 'groß'} %}
+
+{% block inhalt %}
+<p class="brotkrumen">
+    <a href="/">Meine Klassen</a> › <a href="/klassen/{{ klasse.id }}">{{ klasse.anzeigename }}</a> ›
+    <a href="/klassen/{{ klasse.id }}/pruefliste">Prüfliste</a> › Vorfall
+</p>
+
+<div class="seitenkopf">
+    <div>
+        <h1>{{ vorfall.datum|date('d.m.Y') }} · {{ vorfall.fach_klartext ?: (vorfall.fach_kuerzel ?: 'ohne Fach') }}</h1>
+        <p class="leise">
+            {{ vorfall.webuntis_kategorie ?: 'ohne Kategorie' }} ·
+            {% if vorfall.klasseneintrag and vorfall.anzahl_beteiligte == 0 %}ganze Klasse{% else %}{{ vorfall.anzahl_beteiligte }} {{ vorfall.anzahl_beteiligte == 1 ? 'Beteiligte(r)' : 'Beteiligte' }}{% endif %}
+            · {{ statusnamen[vorfall.status] ?? vorfall.status }}
+            {% if wirksam.zaehlt %} · zählt {{ gewichtung.fuer(wirksam.richtung, wirksam.stufe)|punkte }}{% else %} · zählt derzeit nicht{% endif %}
+        </p>
+    </div>
+    <span class="leise">{{ offen }} offen</span>
+</div>
+
+{% if vorfall.status == 'zuordnung_pruefen' and moeglich_zu %}
+<section class="karte karte--hinweis" aria-labelledby="titel-zuordnung">
+    <h2 id="titel-zuordnung">Gehört das zu einem älteren Vorfall?</h2>
+    <p>Am selben Tag, im selben Fach, von derselben Lehrkraft und mit derselben Kategorie gibt es schon einen Vorfall
+       ({{ statusnamen[moeglich_zu.status] ?? moeglich_zu.status }}{% if moeglich_zu.kurztext %}: „{{ moeglich_zu.kurztext }}“{% endif %}).
+       Dessen Originaltext ist bereits gelöscht, deshalb ließ sich das nicht automatisch erkennen.
+       Bis Sie entscheiden, zählt dieser Eintrag nicht – damit nichts doppelt zählt.</p>
+    {% if not klasse.istArchiviert %}
+    <div class="aktionen">
+        <form method="post" action="/vorfaelle/{{ vorfall.id }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="aktion" value="zusammen">
+            <input type="hidden" name="ziel" value="{{ moeglich_zu.id }}">
+            <button class="knopf" type="submit">Ja, zusammenführen</button>
+        </form>
+        <form method="post" action="/vorfaelle/{{ vorfall.id }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="aktion" value="eigener">
+            <button class="knopf knopf--zweit" type="submit">Nein, eigener Vorfall</button>
+        </form>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="karte" aria-labelledby="titel-original">
+    <h2 id="titel-original">Originaltext aus dem Klassenbuch</h2>
+    {% if originaltext is not null %}
+        <blockquote class="originaltext">{{ originaltext|nl2br }}</blockquote>
+        <p class="leise klein">Nur für Sie sichtbar, verschlüsselt gespeichert. Erscheint nie öffentlich – auf der Klassenseite steht nur, was Sie unten freigeben.</p>
+    {% else %}
+        <p class="leise">Gelöscht – der Vorfall ist entschieden, und ein späterer Export hat ihm nichts mehr hinzugefügt.</p>
+    {% endif %}
+</section>
+
+{% if klasse.istArchiviert %}
+    <section class="karte"><p class="leise">Die Klasse ist archiviert. Entscheidungen lassen sich nicht mehr ändern.</p></section>
+{% else %}
+
+<form class="karte" method="post" action="/vorfaelle/{{ vorfall.id }}" aria-labelledby="titel-entscheidung" novalidate>
+    <h2 id="titel-entscheidung">Entscheidung</h2>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+
+    <p class="leise">Aus der Kategorie: <strong>{{ bewertung_text(aus_kategorie.richtung, aus_kategorie.stufe) }}</strong>{% if aus_kategorie.richtung == 'pruefen' %} – bitte selbst einstufen{% endif %}.</p>
+
+    <fieldset class="feld{% if fehler.richtung is defined %} feld--fehler{% endif %}">
+        <legend>Richtung</legend>
+        <div class="wahl">
+        {% for wert, name in richtungen %}
+            <label class="wahl__punkt"><input type="radio" name="richtung" value="{{ wert }}"{% if eingabe.richtung == wert %} checked{% endif %}> {{ name }}</label>
+        {% endfor %}
+        </div>
+        {% if fehler.richtung is defined %}<p class="feld__fehler">{{ fehler.richtung }}</p>{% endif %}
+    </fieldset>
+
+    <fieldset class="feld{% if fehler.stufe is defined %} feld--fehler{% endif %}">
+        <legend>Stufe</legend>
+        <div class="wahl">
+        {% for wert, name in stufen %}
+            <label class="wahl__punkt"><input type="radio" name="stufe" value="{{ wert }}"{% if eingabe.stufe == wert %} checked{% endif %}> {{ name }} ({{ gewichtung.punkte(wert) }} {{ gewichtung.punkte(wert) == 1 ? 'Punkt' : 'Punkte' }})</label>
+        {% endfor %}
+        </div>
+        {% if fehler.stufe is defined %}<p class="feld__fehler">{{ fehler.stufe }}</p>{% endif %}
+    </fieldset>
+
+    <div class="feld{% if fehler.kurztext is defined or namenstreffer is not empty %} feld--fehler{% endif %}">
+        <label for="kurztext">Kurztext für die Klassenseite</label>
+        <input id="kurztext" name="kurztext" type="text" maxlength="160" value="{{ eingabe.kurztext }}" list="bausteine" autocomplete="off" aria-describedby="kurztext-hinweis">
+        <datalist id="bausteine">
+            {% for b in textbausteine %}<option value="{{ b.text }}">{{ b.richtung }}</option>{% endfor %}
+        </datalist>
+        {% if fehler.kurztext is defined %}
+            <p class="feld__fehler" id="kurztext-hinweis">{{ fehler.kurztext }}</p>
+        {% else %}
+            <p class="feld__hinweis" id="kurztext-hinweis">Neutral formuliert und ohne Namen – er steht öffentlich auf der Klassenseite. Höchstens 160 Zeichen.</p>
+        {% endif %}
+        <div class="bausteine" aria-label="Textbausteine">
+            {% for b in textbausteine %}
+                <button type="button" class="baustein baustein--{{ b.richtung }}" data-baustein="{{ b.text }}" data-ziel="kurztext">{{ b.text }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if namenstreffer is not empty %}
+    <div class="meldung meldung--fehler" role="alert">
+        <p><strong>Enthält der Kurztext einen Namen?</strong>
+           {{ namenstreffer|length == 1 ? 'Das Wort' : 'Die Wörter' }} „{{ namenstreffer|join('“, „') }}“
+           {{ namenstreffer|length == 1 ? 'passt' : 'passen' }} zu einem Namen aus diesem Vorfall oder aus der Namensliste der Klasse.</p>
+        <label><input type="checkbox" name="trotzdem" value="1"> Kein Name gemeint – trotzdem freigeben</label>
+    </div>
+    {% endif %}
+
+    <div class="aktionen">
+        <button class="knopf" type="submit" name="aktion" value="freigegeben">Freigeben</button>
+        <button class="knopf knopf--zweit" type="submit" name="aktion" value="ohne_text">Ohne Text zählen</button>
+        <button class="knopf knopf--warnung" type="submit" name="aktion" value="ignoriert">Ignorieren</button>
+        <label class="leise"><input type="checkbox" name="weiter" value="1" checked> danach zum nächsten offenen</label>
+    </div>
+    <p class="leise klein">Freigeben: Kurztext und Punkte erscheinen auf der Klassenseite. Ohne Text: dort steht nur „{{ bewertung_text(eingabe.richtung ?: 'pruefen', eingabe.stufe ?: null) }}“. Ignorieren: zählt nicht und erscheint nicht.</p>
+</form>
+
+<section class="karte" aria-labelledby="titel-gruppierung">
+    <h2 id="titel-gruppierung">Gruppierung korrigieren</h2>
+    <p class="leise">Klassenziel fasst Zeilen zu einem Vorfall zusammen, wenn Datum, Fach, Lehrkraft und Kategorie gleich und die Texte bis auf die Namen ähnlich sind. Liegt es daneben:</p>
+
+    {% if vorfall.zeilen >= 2 %}
+    <form method="post" action="/vorfaelle/{{ vorfall.id }}" class="aktionen">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="aktion" value="teilen">
+        <label for="anzahl">Teilen: davon abtrennen</label>
+        <input id="anzahl" name="anzahl" type="number" min="1" max="{{ vorfall.zeilen - 1 }}" value="1" inputmode="numeric" class="zahlfeld">
+        <span class="leise">von {{ vorfall.zeilen }} Zeilen</span>
+        <button class="knopf knopf--zweit" type="submit">Abtrennen</button>
+        {% if fehler.teilen is defined %}<p class="feld__fehler">{{ fehler.teilen }}</p>{% endif %}
+    </form>
+    {% endif %}
+
+    {% if am_selben_tag is not empty %}
+    <form method="post" action="/vorfaelle/{{ vorfall.id }}" class="aktionen">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="aktion" value="zusammen">
+        <label for="ziel">Zusammenführen mit</label>
+        <select id="ziel" name="ziel">
+            {% for a in am_selben_tag %}
+                <option value="{{ a.id }}">{{ a.fach_klartext ?: (a.fach_kuerzel ?: 'ohne Fach') }} · {{ a.webuntis_kategorie ?: 'ohne Kategorie' }} · {{ a.anzahl_beteiligte }} Bet.{% if a.kurztext %} · {{ a.kurztext }}{% endif %}</option>
+            {% endfor %}
+        </select>
+        <button class="knopf knopf--zweit" type="submit">Zusammenführen</button>
+        {% if fehler.zusammen is defined %}<p class="feld__fehler">{{ fehler.zusammen }}</p>{% endif %}
+    </form>
+    {% elseif vorfall.zeilen < 2 %}
+        <p class="leise">Nichts zu korrigieren: eine Zeile, und kein anderer Vorfall am selben Tag.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -20,6 +20,21 @@
 </div>
 {% endif %}
 
+<section class="karte" aria-labelledby="titel-stand">
+    <h2 id="titel-stand">Punktestand</h2>
+    <dl class="kennzahlen">
+        <div><dt>Stand heute</dt><dd>{{ wertung.stand }}<span class="leise klein"> / 100</span></dd></div>
+        <div><dt>Ziel</dt><dd>{{ klasse.zielwert }}</dd></div>
+        <div><dt>Diese Woche</dt><dd>{{ wertung.wochenbilanz|punkte }}</dd></div>
+        <div><dt>Offen in der Prüfliste</dt><dd>{{ offen }}</dd></div>
+    </dl>
+    <div class="aktionen">
+        <a class="knopf" href="/klassen/{{ klasse.id }}/pruefliste">Prüfliste{% if offen > 0 %} ({{ offen }}){% endif %}</a>
+        <a class="knopf knopf--zweit" href="/klassen/{{ klasse.id }}/gewichtung">Gewichtung und Simulation</a>
+        <a href="/klassen/{{ klasse.id }}/pruefliste?alle=1">Alle Vorfälle</a>
+    </div>
+</section>
+
 <section class="karte" id="link" aria-labelledby="titel-link">
     <h2 id="titel-link">Link für Klasse und Eltern</h2>
     {% if link %}
@@ -108,6 +123,25 @@
 </section>
 
 {% if not klasse.istArchiviert %}
+<section class="karte" id="namensliste" aria-labelledby="titel-namensliste">
+    <h2 id="titel-namensliste">Namensliste für die Namenswarnung</h2>
+    <p>Optional. Enthält ein Kurztext einen dieser Vornamen, fragt Klassenziel vor dem Freigeben nach.
+       Die Namen aus dem Export prüft es ohnehin – diese Liste fängt zusätzlich Namen, die im Text vorkommen, aber nicht in der Spalte „Name“.</p>
+    <p class="leise">
+        {% if namensliste > 0 %}{{ namensliste }} Namensteile hinterlegt.{% else %}Noch keine Liste hinterlegt.{% endif %}
+        Gespeichert wird nur eine Prüfsumme je Name – die Liste lässt sich ersetzen, aber nicht wieder anzeigen.
+    </p>
+    <form method="post" action="/klassen/{{ klasse.id }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="aktion" value="namensliste">
+        <label for="namen" class="unsichtbar">Vornamen</label>
+        <textarea id="namen" name="namen" rows="4" placeholder="Vornamen, durch Komma oder je eine Zeile" autocomplete="off" spellcheck="false"></textarea>
+        <div class="aktionen">
+            <button class="knopf knopf--zweit" type="submit">{{ namensliste > 0 ? 'Liste ersetzen' : 'Liste hinterlegen' }}</button>
+        </div>
+    </form>
+</section>
+
 <section class="karte karte--gefahr" id="archivieren" aria-labelledby="titel-archivieren">
     <h2 id="titel-archivieren">Archivieren</h2>
     <p>Am Schuljahresende: Der Link gilt danach nicht mehr, und alle Originaltexte aus dem Klassenbuch werden gelöscht.

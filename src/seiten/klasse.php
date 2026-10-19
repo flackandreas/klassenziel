@@ -79,6 +79,13 @@ if (Kern::istPost()) {
             }
             Kern::weiterleiten('/klassen/' . $id . '#zustaendig');
 
+        case 'namensliste':
+            $anzahl = $kern->namensliste()->ersetze($id, is_string($_POST['namen'] ?? null) ? $_POST['namen'] : '');
+            Sitzung::meldung('erfolg', $anzahl === 0
+                ? 'Die Namensliste ist leer.'
+                : $anzahl . ' Namensteile hinterlegt – nur als Prüfsumme, die Namen selbst sind nicht gespeichert.');
+            Kern::weiterleiten('/klassen/' . $id . '#namensliste');
+
         case 'archivieren':
             if (($_POST['bestaetigt'] ?? '') !== $klasse->exportKuerzel) {
                 Sitzung::meldung('fehler', 'Zum Archivieren bitte das Exportkürzel der Klasse eintippen.');
@@ -101,6 +108,9 @@ $kern->zeichne('klasse.twig', [
     'konto' => $konto,
     'klasse' => $klasse,
     'daten' => $daten,
+    'wertung' => $kern->standdienst()->wertung($klasse, new DateTimeImmutable('today')),
+    'offen' => $kern->vorfaelle()->offeneAnzahl($id),
+    'namensliste' => $kern->namensliste()->anzahl($id),
     'link' => $link !== null ? Anfrage::basis() . '/klassenziel/' . $link : null,
     'zustaendige' => $zustaendige,
     'weitere_konten' => $konto->istVerwaltung
