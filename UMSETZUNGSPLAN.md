@@ -1,14 +1,14 @@
 # Klassenziel – Umsetzungsplan
 
-Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.2026 von Andreas freigegeben, mit den Vorschlägen aus Abschnitt 8
+Stand: 21.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.2026 von Andreas freigegeben, mit den Vorschlägen aus Abschnitt 8
 
 | Phase | Stand |
 |---|---|
 | 1 – Gerüst, Datenmodell, Klassen, Link | erledigt |
 | 2 – Import | erledigt |
 | 3 – Prüfliste und Wertung | erledigt |
-| 4 – Öffentliche Ansicht | erledigt |
-| 5 – Datenschutz und Betrieb | umgesetzt; Probelauf auf dem Pi offen |
+| 4 – Öffentliche Ansicht | erledigt; seit 21.10.2026 Verlaufslinie statt Balken (#1) |
+| 5 – Datenschutz und Betrieb | erledigt; läuft seit 20.10.2026 auf dem Mac mini |
 
 ---
 
@@ -19,7 +19,7 @@ Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.202
 | SchulOS ist eine Laravel-App im Repository `schulos` | `schulos` ist die Marketing-Seite (React/Vite, Vercel). SchulOS selbst ist ein **Verbund**: `schulos-portal` (OIDC-Anbieter, PHP 8.2) plus je Modul ein eigenes Repository mit eigenem Hostnamen und eigener Datenbank |
 | Modul „Anträge“ als Vorlage | `feedback_rstn`: PHP 8.2, Twig, PDO, ohne Tests. Die neueren Konventionen stehen im **Portal** (Code im Abbild, CSP ohne `unsafe-inline`, PHPUnit + PHPStan, festgenagelte Actions) und in **Unterricht** (`schulos/sso`, `portal_konten`, Migrator, `rate_limits`, Token-Seiten ohne Anmeldung) |
 | Rollen aus SchulOS | Portalgruppen über `schulos/sso`: `PORTAL_ADMIN_GRUPPEN` = Verwaltung, `PORTAL_ZUGANG_GRUPPEN` = Zugang. Klassen aus IServ überträgt das Portal bewusst nicht |
-| Erreichbarkeit von außen offen (Planung, Abschnitt 13) | Weitgehend schon gelöst: `*.rstn.de` hat DNS-Platzhalter und Zertifikat, IServ leitet je Hostname an einen Port des Mac mini weiter. Für Klassenziel fehlt nur ein Eintrag `klassenziel.rstn.de → <Mac mini>:8010` (Adresse siehe `deploy/MAC-MINI.md` im Portal) |
+| Erreichbarkeit von außen offen (Planung, Abschnitt 13) | Weitgehend schon gelöst: `*.rstn.de` hat DNS-Platzhalter und Zertifikat, IServ leitet je Hostname an einen Port des Mac mini weiter. Für Klassenziel fehlte nur ein Eintrag `klassenziel.rstn.de → <Mac mini>:8010` (Adresse siehe `deploy/MAC-MINI.md` im Portal); er ist geschaltet (geprüft am 21.10.2026) |
 
 ## 2. Abweichungen von der Planung (Konventionen gehen vor)
 
