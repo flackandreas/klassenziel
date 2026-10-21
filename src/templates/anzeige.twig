@@ -1,14 +1,18 @@
 {#
-  Die oeffentliche Klassenseite (Planung, Abschnitt 8, Variante A "Health-Balken").
+  Die oeffentliche Klassenseite (Planung, Abschnitt 8). Der Punktestand
+  erscheint als Linie ueber das Schuljahr, mit Ziel und Smiley-Etappen
+  (_verlaufslinie.twig) - frueher ein "Health-Balken".
 
   Ein Dokument fuer beide Layouts: Das Stylesheet ordnet dieselben Bausteine
   fuer den Beamer (?ansicht=beamer oder grosser Bildschirm) und fuer das Handy
-  an. Alles steht auch ohne JavaScript da; das Skript animiert nur den Balken,
+  an. Die Linie gibt es in zwei Formaten, je eines fuer jedes Layout. Alles
+  steht auch ohne JavaScript da; das Skript zeichnet die Linie einmal auf,
   aktualisiert alle fuenf Minuten und laedt weitere Eintraege nach.
 
   Daten nur aus Anzeigedaten - dort steht die abschliessende Feldliste.
 #}
 {%- import '_gesicht.twig' as g -%}
+{%- import '_verlaufslinie.twig' as v -%}
 {%- set a = anzeige -%}
 {%- set c = a.countdown -%}
 {%- set s = a.stimmung -%}
@@ -29,7 +33,7 @@
     <script src="{{ datei('/js/anzeige.js') }}" defer></script>
 </head>
 <body class="anzeige{% if beamer %} anzeige--beamer{% endif %}"
-      data-stand="{{ a.stand }}" data-ziel="{{ a.ziel }}" data-merker="{{ merker }}" data-anzahl="{{ anzahl }}">
+      data-stand="{{ a.stand }}" data-ziel="{{ a.ziel }}" data-punkte="{{ a.verlauf.punkte|length }}" data-merker="{{ merker }}" data-anzahl="{{ anzahl }}">
 <main class="anzeige__raster">
 
     <header class="anzeige__kopf">
@@ -76,24 +80,27 @@
             </div>
         </div>
 
-        <div class="balken" role="img" aria-label="{{ a.stand }} von 100 Punkten, Ziel {{ a.ziel }}. {{ s.spruch }}" data-feld="balken">
-            <div class="balken__spur">
-                <div class="balken__fuellung fuellung--{{ a.stand }}" data-feld="fuellung"></div>
-                <div class="balken__segmente" aria-hidden="true"></div>
-            </div>
-            <div class="balken__ziel ziel--{{ a.ziel }}" aria-hidden="true"></div>
-            {# Etappen: ein Smiley je Viertel des Ziels. .ziel--N setzt nur die Lage. #}
-            <div class="balken__etappen" aria-hidden="true">
-                {%- for e in s.etappen %}
-                <span class="etappe ziel--{{ e.bei }}{% if e.erreicht %} etappe--erreicht{% endif %}" data-bei="{{ e.bei }}">{{ g.gesicht(e.stufe) }}</span>
-                {%- endfor %}
-            </div>
+        {# Die Linie in zwei Formaten; das Stylesheet zeigt das passende. Mit
+           ?ansicht=beamer steht das Layout fest, dann reicht eines. #}
+        <div class="verlauf-huelle" data-feld="verlauf">
+            {{ v.linie(verlaufsbild.beamer) }}
+            {%- if not beamer %}
+            {{ v.linie(verlaufsbild.handy) }}
+            {%- endif %}
         </div>
-        <div class="skala" aria-hidden="true">
-            <span class="skala__wert skala__wert--links">0</span>
-            <span class="skala__ziel ziel--{{ a.ziel }}">Ziel: {{ a.ziel }}</span>
-            <span class="skala__wert skala__wert--rechts">100</span>
-        </div>
+        {% if not beamer %}
+        <details class="verlauf-tabelle nur-handy">
+            <summary>Als Tabelle</summary>
+            <table>
+                <thead><tr><th scope="col">Woche bis</th><th scope="col" class="zahl">Punkte</th></tr></thead>
+                <tbody>
+                {% for zeile in verlaufsbild.handy.tabelle %}
+                    <tr><td>{{ zeile.datum }}</td><td class="zahl">{{ zeile.stand }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </details>
+        {% endif %}
     </section>
 
     <section class="anzeige__woche karte" aria-labelledby="titel-woche">

@@ -1,0 +1,62 @@
+{#
+  Der Punkteverlauf als Linie (Verlaufsbild.php rechnet, hier wird nur
+  gezeichnet). Farben, Linienstaerken und Schrift ueber Klassen in
+  anzeige.css - kein style-Attribut (CSP). Schriftgroessen als
+  Praesentationsattribut, weil sie je Format verschieden sind.
+
+  Die Linie steht ohne JavaScript vollstaendig da; anzeige.js zeichnet sie
+  nur einmal auf und blendet danach den Endpunkt ein.
+#}
+{% macro linie(b) %}
+{%- import '_gesicht.twig' as g -%}
+<svg class="verlauf verlauf--{{ b.format }}" viewBox="0 0 {{ b.breite }} {{ b.hoehe }}" role="img" aria-label="{{ b.beschreibung }}" data-verlauf>
+    <g class="verlauf__ferien" aria-hidden="true">
+    {%- for f in b.ferien %}
+        <rect x="{{ f.x }}" y="{{ b.oben }}" width="{{ f.breite }}" height="{{ b.unten - b.oben }}"/>
+    {%- endfor %}
+    </g>
+    {%- if b.ferientext %}
+    <text class="verlauf__klein" x="{{ b.ferientext.x }}" y="{{ b.ferientext.y }}" font-size="{{ b.schrift - 2 }}" aria-hidden="true">Ferien</text>
+    {%- endif %}
+
+    <g class="verlauf__raster" aria-hidden="true">
+    {%- for r in b.raster %}
+        <line x1="{{ b.links }}" x2="{{ b.rechts }}" y1="{{ r.y }}" y2="{{ r.y }}"/>
+        <text class="verlauf__achse" x="{{ b.links - 6 }}" y="{{ r.y }}" font-size="{{ b.schrift }}" text-anchor="end" dominant-baseline="middle">{{ r.wert }}</text>
+    {%- endfor %}
+    </g>
+
+    <g class="verlauf__monate" aria-hidden="true">
+    {%- for m in b.monate %}
+        <text class="verlauf__achse" x="{{ m.x }}" y="{{ b.achse_y }}" font-size="{{ b.schrift }}" text-anchor="{{ m.anker }}">{{ m.text }}</text>
+    {%- endfor %}
+    </g>
+
+    {%- if b.stichtag %}
+    <g class="verlauf__stichtag" aria-hidden="true">
+        <line x1="{{ b.stichtag.x }}" x2="{{ b.stichtag.x }}" y1="{{ b.oben }}" y2="{{ b.unten }}"/>
+        <text x="{{ b.stichtag.x }}" y="{{ b.achse_y }}" font-size="{{ b.schrift }}" text-anchor="end">{{ b.stichtag.text }}</text>
+    </g>
+    {%- endif %}
+
+    <g class="verlauf__ziel" aria-hidden="true">
+        <line x1="{{ b.links }}" x2="{{ b.rechts }}" y1="{{ b.ziel.y }}" y2="{{ b.ziel.y }}"/>
+        <text x="{{ b.ziel.text_x }}" y="{{ b.ziel.y }}" font-size="{{ b.schrift }}" dominant-baseline="middle">{{ b.ziel.text }}</text>
+    </g>
+
+    {#- Etappen: ein Smiley je Viertel des Ziels, auf seiner Hoehe. #}
+    {%- for e in b.etappen %}
+    <g class="etappe{% if e.erreicht %} etappe--erreicht{% endif %}" data-bei="{{ e.bei }}" aria-hidden="true">{{ g.gesicht(e.stufe, '', e) }}</g>
+    {%- endfor %}
+
+    {%- if b.pfad %}
+    <path class="verlauf__linie" d="{{ b.pfad }}" aria-hidden="true"/>
+    {%- endif %}
+    {%- if b.ende %}
+    <g class="verlauf__ende" aria-hidden="true">
+        <circle class="verlauf__punkt" cx="{{ b.ende.x }}" cy="{{ b.ende.y }}" r="5"/>
+        <text class="verlauf__wert" x="{{ b.ende.text_x }}" y="{{ b.ende.text_y }}" font-size="{{ b.wertschrift }}" text-anchor="middle">{{ b.ende.wert }}</text>
+    </g>
+    {%- endif %}
+</svg>
+{% endmacro %}

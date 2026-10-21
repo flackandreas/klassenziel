@@ -2,12 +2,14 @@
 
 Ein SchulOS-Modul: Eine Klasse verdient sich über das Schuljahr gemeinsam eine
 Belohnung – für die 9d eine Kanutour mit Übernachtung. Der Punktestand steht als
-„Health-Balken“ am Beamer und auf einer Seite für Schülerinnen, Schüler und Eltern.
+Verlaufslinie am Beamer und auf einer Seite für Schülerinnen, Schüler und Eltern:
+ein Punkt je Woche, vom Start bis heute, auf einer Zeitachse bis zum Stichtag.
 Er sinkt mit negativen und steigt mit positiven Einträgen aus dem Klassenbuch.
 Die Einträge erscheinen dort ohne Namen.
 
-Im Balken sitzen vier Smileys bei einem, zwei, drei Vierteln des Ziels und beim
-Ziel. Mit jeder erreichten Etappe wird das Gesicht neben dem Punktestand
+Rechts neben der Linie sitzen vier Smileys auf der Höhe von einem, zwei, drei
+Vierteln des Ziels und auf der Ziellinie. Mit jeder erreichten Etappe wird das
+Gesicht neben dem Punktestand
 fröhlicher, von besorgt bis Jubel. Die Seite sagt immer, wie viele Punkte es
 noch bis zum nächsten Smiley sind (`app/Anzeige/Stimmung.php`).
 
@@ -134,17 +136,22 @@ damit von selbst ungültig.
   werden die fünf neuesten Einträge. Das Layout steht in `anzeige-beamer.css`.
   Es wird mit `?ansicht=beamer` fest geladen, sonst für große Bildschirme im
   Querformat.
-- **Handy** (Referenz 390×844): Stand mit 28-px-Balken, Countdown und
-  Wochenbilanz als Kacheln, 20 Einträge und „Weitere laden“. Ohne JavaScript ist
-  „Weitere laden“ ein Link.
+- **Handy** (Referenz 390×844): Stand mit Verlaufslinie im hohen Format,
+  darunter der Verlauf „Als Tabelle“, Countdown und Wochenbilanz als Kacheln,
+  20 Einträge und „Weitere laden“. Ohne JavaScript ist „Weitere laden“ ein Link.
+- **Verlaufslinie** (`Anzeige/Verlaufsbild`, `_verlaufslinie.twig`): ein Punkt
+  je Woche (Stand am Sonntag, zuletzt der heutige), keine Prognose. Ferien
+  liegen als helle Streifen dahinter und erklären flache Stücke. Zwei Formate
+  mit eigener Schriftgröße, weil ein SVG die Schrift mitskaliert.
 - Alles kommt aus `Anzeige/Anzeigedaten` mit fester Feldliste:
   - Datum, Fach (Klartext), freigegebener Kurztext oder die Bezeichnung der Kategorie
   - Punkte mit typografischem Minus (U+2212), Stufe
   - der Wochenbonus als eigener Eintrag
-- Kein `style`-Attribut. Füllung und Zielmarke kommen über die Klassen
-  `.fuellung--0…100` und `.ziel--0…100`. Das Skript animiert nur über CSSOM, vom
-  zuletzt auf diesem Gerät gesehenen Stand aus (localStorage); mit
-  `prefers-reduced-motion` gibt es keine Animation.
+- Kein `style`-Attribut. Die Linie zeichnet der Server als SVG, sie steht auch
+  ohne JavaScript. Das Skript zeichnet sie beim Laden einmal auf, nur über
+  CSSOM; seit dem letzten Besuch auf diesem Gerät neu erreichte Smileys
+  (localStorage) leuchten danach auf. Mit `prefers-reduced-motion` gibt es
+  keine Animation.
 - Schriften selbst ausgeliefert: Bricolage Grotesque 600/700 und Atkinson
   Hyperlegible 400/700 aus Fontsource 5.3.0, unter der SIL OFL 1.1. Die
   Lizenztexte liegen in `public/fonts/`.
@@ -200,7 +207,7 @@ mit dem eingebauten Server von PHP. Ohne `TEST_DB_NAME` werden sie übersprungen
 
 | Route | |
 |---|---|
-| `/klassenziel/{link}` | öffentliche Klassenseite mit dem Health-Balken; `?ansicht=beamer` erzwingt das Beamer-Layout, `?eintraege=40` zeigt mehr Einträge |
+| `/klassenziel/{link}` | öffentliche Klassenseite mit der Verlaufslinie; `?ansicht=beamer` erzwingt das Beamer-Layout, `?eintraege=40` zeigt mehr Einträge |
 | `/klassenziel/{link}/stand.json` | dieselben Daten als JSON (`anzahl`, `versatz`), für die Aktualisierung alle 5 Minuten |
 | `/datenschutz` | Hinweise zum Datenschutz (Platzhalter) |
 | `/` | meine Klassen |

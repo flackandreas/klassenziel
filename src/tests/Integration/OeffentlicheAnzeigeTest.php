@@ -97,16 +97,24 @@ final class OeffentlicheAnzeigeTest extends Datenbankfall
 
         // 50 -1 -1 -5 +3 -1, Bonus 20.09., 27.09., 04.10., 18.10.: 57
         self::assertStringContainsString('data-stand="57"', $html);
-        self::assertStringContainsString('fuellung--57', $html);
-        self::assertStringContainsString('ziel--70', $html);
         self::assertStringContainsString('Noch 13 Punkte bis zum Ziel', $html);
-        // Etappen bei 18, 35, 53 und 70: drei erreicht, Stufe 3.
+        // Die Linie in beiden Formaten, mit Ziel und Beschreibung fuer Screenreader.
+        self::assertStringContainsString('class="verlauf verlauf--beamer"', $html);
+        self::assertStringContainsString('class="verlauf verlauf--handy"', $html);
+        self::assertSame(2, substr_count($html, 'class="verlauf__linie"'));
+        self::assertStringContainsString('>Ziel 70</text>', $html);
+        self::assertStringContainsString('aria-label="Punkteverlauf seit 14.09.2026: Start bei 50, jetzt 57 von 100 Punkten, Ziel 70, Stichtag 30.06.2027."', $html);
+        self::assertStringContainsString('Als Tabelle', $html);
+        // Etappen bei 18, 35, 53 und 70: drei erreicht, Stufe 3 - je Format einmal.
         self::assertStringContainsString('stimmung--3', $html);
         self::assertStringContainsString('Auf der Zielgeraden!', $html);
-        self::assertSame(4, substr_count($html, 'class="etappe '));
-        self::assertSame(3, substr_count($html, 'etappe--erreicht'));
-        self::assertStringContainsString('class="etappe ziel--53 etappe--erreicht" data-bei="53"', $html);
-        self::assertStringContainsString('class="etappe ziel--70" data-bei="70"', $html);
+        self::assertSame(8, substr_count($html, 'class="etappe'));
+        self::assertSame(6, substr_count($html, 'etappe--erreicht'));
+        self::assertSame(2, substr_count($html, 'class="etappe etappe--erreicht" data-bei="53"'));
+        self::assertSame(2, substr_count($html, 'class="etappe" data-bei="70"'));
+        // Kein style-Attribut: Die Content-Security-Policy liesse es nicht zu.
+        self::assertStringNotContainsString(' style="', $html);
+        self::assertStringNotContainsString('balken', $html);
         self::assertStringContainsString('Unterrichtsstörung', $html);
         self::assertStringContainsString('Gute Mitarbeit', $html);
         self::assertStringContainsString('Großer negativer Eintrag', $html);
@@ -142,6 +150,10 @@ final class OeffentlicheAnzeigeTest extends Datenbankfall
         self::assertStringContainsString('anzeige--beamer', $html);
         self::assertStringNotContainsString('Weitere laden', $html);
         self::assertSame(5, substr_count($html, '<li class="eintrag '));
+        // Das Layout steht fest: nur die breite Linie, keine Tabelle.
+        self::assertStringContainsString('class="verlauf verlauf--beamer"', $html);
+        self::assertStringNotContainsString('verlauf--handy', $html);
+        self::assertStringNotContainsString('Als Tabelle', $html);
 
         $handy = self::hole($this->link)['inhalt'];
         self::assertMatchesRegularExpression('#anzeige-beamer\.css\?v=\d+" media="#', $handy);
@@ -159,6 +171,12 @@ final class OeffentlicheAnzeigeTest extends Datenbankfall
         self::assertSame(57, $daten['stand']);
         self::assertCount(3, $daten['eintraege']);
         self::assertTrue($daten['weitere']);
+        // Der Verlauf: je Woche nur Datum und Stand, vom Start mit 50 bis heute.
+        self::assertSame(['datum' => '2026-09-14', 'stand' => 50], $daten['verlauf']['punkte'][0]);
+        foreach ($daten['verlauf']['punkte'] as $punkt) {
+            self::assertSame(['datum', 'stand'], array_keys($punkt));
+        }
+        self::assertSame(57, $daten['verlauf']['punkte'][count($daten['verlauf']['punkte']) - 1]['stand']);
 
         $weiter = json_decode(self::hole($this->link . '/stand.json?anzahl=50&versatz=3')['inhalt'], true);
         self::assertIsArray($weiter);

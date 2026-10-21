@@ -2,13 +2,15 @@
  * Oeffentliche Klassenseite.
  *
  * Die Seite steht ohne dieses Skript vollstaendig da. Es tut drei Dinge:
- *   - der Balken waechst beim Laden vom zuletzt gesehenen zum aktuellen
- *     Stand (der zuletzt gesehene liegt nur auf diesem Geraet, im
- *     localStorage; mit prefers-reduced-motion ohne Animation). Ueberquert
- *     er dabei eine Smiley-Etappe, leuchtet sie auf, wenn er sie erreicht,
- *     und huepft einmal,
+ *   - die Linie des Punkteverlaufs zeichnet sich beim Laden einmal auf,
+ *     danach erscheint ihr Endpunkt mit dem Stand. Ist seit dem letzten
+ *     Besuch eine Smiley-Etappe neu erreicht (der zuletzt gesehene Stand
+ *     liegt nur auf diesem Geraet, im localStorage), leuchtet sie danach
+ *     auf und huepft einmal. Mit prefers-reduced-motion ohne Bewegung,
  *   - alle fuenf Minuten holt es den Stand neu und aendert nur, was sich
- *     geaendert hat - ohne Neuladen, ohne Flackern,
+ *     geaendert hat. Hat sich der Verlauf geaendert - neuer Stand, eine
+ *     weitere Woche, ein anderes Ziel -, laedt es die Seite neu: Die Linie
+ *     zeichnet der Server, das Skript baut sie nicht nach,
  *   - "Weitere laden" haengt Eintraege an, statt die Seite neu zu laden.
  *
  * Alle Texte aus den Daten kommen ueber textContent ins Dokument.
@@ -22,6 +24,7 @@
     var merker = body.getAttribute('data-merker') || 'klassenziel';
     var standAktuell = parseInt(body.getAttribute('data-stand'), 10);
     var zielAktuell = parseInt(body.getAttribute('data-ziel'), 10);
+    var punkteAktuell = parseInt(body.getAttribute('data-punkte'), 10);
     var ruhig = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     var feld = function (name) {
@@ -52,7 +55,7 @@
         }
     };
 
-    // --- Balken ---------------------------------------------------------
+    // --- Linie -----------------------------------------------------------
 
     var DAUER = 1400;
 
@@ -63,47 +66,65 @@
         return parseInt(etappe.getAttribute('data-bei'), 10);
     };
 
-    var schalteEtappen = function (stand) {
-        etappen().forEach(function (etappe) {
-            etappe.classList.remove('etappe--neu');
-            etappe.classList.toggle('etappe--erreicht', stand >= bei(etappe));
+    // Zeichnet jede sichtbare Linie einmal auf: Strichmuster in voller Laenge,
+    // um die ganze Laenge verschoben, dann auf null - per CSSOM, die CSP
+    // erlaubt kein style-Attribut. Danach wieder ohne Muster, damit die Linie
+    // auch nach einer Groessenaenderung vollstaendig bleibt.
+    var zeichneLinie = function () {
+        document.querySelectorAll('svg[data-verlauf]').forEach(function (bild) {
+            var linie = bild.querySelector('.verlauf__linie');
+            var ende = bild.querySelector('.verlauf__ende');
+            var laenge = 0;
+            try {
+                laenge = linie && bild.getBoundingClientRect().width > 0 ? linie.getTotalLength() : 0;
+            } catch (e) {
+                laenge = 0;
+            }
+            if (!(laenge > 0)) {
+                return;
+            }
+
+            linie.style.strokeDasharray = laenge + ' ' + laenge;
+            linie.style.strokeDashoffset = String(laenge);
+            if (ende) {
+                ende.classList.add('verlauf__ende--warten');
+            }
+            void linie.getBoundingClientRect();
+            linie.style.transition = 'stroke-dashoffset ' + DAUER + 'ms cubic-bezier(.3, .7, .4, 1)';
+            window.requestAnimationFrame(function () {
+                linie.style.strokeDashoffset = '0';
+            });
+            window.setTimeout(function () {
+                linie.style.transition = '';
+                linie.style.strokeDasharray = '';
+                linie.style.strokeDashoffset = '';
+                if (ende) {
+                    ende.classList.remove('verlauf__ende--warten');
+                }
+            }, DAUER + 50);
         });
     };
 
-    // Waechst der Balken, leuchtet jede ueberquerte Etappe auf, sobald die
-    // Fuellung dort ankommt - die Kurve der Animation ist vorne steil.
+    // Seit dem letzten Besuch neu erreichte Etappen: erst grau, und wenn die
+    // Linie fertig ist, leuchten sie auf und huepfen einmal.
     var feiereEtappen = function (von, nach) {
-        etappen().forEach(function (etappe) {
-            if (von < bei(etappe) && bei(etappe) <= nach) {
-                window.setTimeout(function () {
-                    etappe.classList.add('etappe--erreicht', 'etappe--neu');
-                }, Math.round(DAUER * 0.7 * (bei(etappe) - von) / (nach - von)));
-            }
-        });
-    };
-
-    var setzeBalken = function (von, nach) {
-        var fuellung = feld('fuellung');
-        if (!fuellung || ruhig || von === null || von === nach) {
-            if (fuellung) {
-                fuellung.style.width = nach + '%';
-            }
-            schalteEtappen(nach);
+        if (von === null || nach <= von) {
             return;
         }
-        // Erst der Stand vor der Animation; sinkt er, gleich der neue.
-        schalteEtappen(Math.min(von, nach));
-        fuellung.style.transition = 'none';
-        fuellung.style.width = von + '%';
-        void fuellung.offsetWidth;
-        fuellung.style.transition = '';
-        window.requestAnimationFrame(function () {
-            fuellung.style.width = nach + '%';
-            feiereEtappen(von, nach);
+        etappen().forEach(function (etappe) {
+            if (von < bei(etappe) && bei(etappe) <= nach) {
+                etappe.classList.remove('etappe--erreicht');
+                window.setTimeout(function () {
+                    etappe.classList.add('etappe--erreicht', 'etappe--neu');
+                }, DAUER);
+            }
         });
     };
 
-    setzeBalken(lies(), standAktuell);
+    if (!ruhig) {
+        zeichneLinie();
+        feiereEtappen(lies(), standAktuell);
+    }
     merke(standAktuell);
 
     // --- Eintraege --------------------------------------------------------
@@ -166,9 +187,10 @@
     };
 
     var zeige = function (d) {
-        // Ein neues Ziel verschiebt alle Etappen - dann die Seite neu laden,
-        // statt sie hier nachzubauen. Das kommt selten vor.
-        if (d.ziel !== zielAktuell) {
+        // Neuer Stand, eine weitere Woche oder ein anderes Ziel veraendern die
+        // Linie - dann die Seite neu laden, statt sie hier nachzubauen. Das
+        // kommt hoechstens einmal am Tag vor, meist einmal in der Woche.
+        if (d.ziel !== zielAktuell || d.stand !== standAktuell || d.verlauf.punkte.length !== punkteAktuell) {
             window.location.reload();
             return;
         }
@@ -186,17 +208,6 @@
             for (var n = 0; n <= 4; n++) {
                 gesicht.classList.toggle('stimmung--' + n, n === s.stufe);
             }
-        }
-
-        if (d.stand !== standAktuell) {
-            setzeBalken(standAktuell, d.stand);
-            standAktuell = d.stand;
-            merke(d.stand);
-        }
-
-        var balken = feld('balken');
-        if (balken) {
-            balken.setAttribute('aria-label', d.stand + ' von 100 Punkten, Ziel ' + d.ziel + '. ' + s.spruch);
         }
 
         countdown(d.countdown);

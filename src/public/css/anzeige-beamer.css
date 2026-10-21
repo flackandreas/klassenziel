@@ -55,22 +55,26 @@ body { height: 100vh; overflow: hidden; }
 
 /* --- Punktestand --- */
 
-.anzeige__stand { padding: 1rem 1.75rem .75rem; }
-.stand { flex-wrap: nowrap; }
+/* Zahl, Gesicht und Spruch links, die Linie rechts daneben: So bleibt die
+   Karte niedrig genug, dass darunter fuenf Eintraege ohne Scrollen passen. */
+.anzeige__stand {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 0 1.75rem;
+    align-items: center;
+    padding: 1rem 1.75rem;
+}
+.stand { flex-wrap: wrap; align-self: center; }
 .stand__zahl { font-size: 3.6rem; }
-.stand__von { font-size: 1.35rem; }
+.stand__von { font-size: 1.1rem; }
 .stand__gesicht { width: 3.6rem; height: 3.6rem; }
-.stand__stimmung { flex-basis: auto; order: 0; margin: 0 0 0 auto; text-align: right; }
-.stand__spruch { font-size: 1.6rem; }
-.stand__status { font-size: 1.1rem; }
+.stand__stimmung { flex-basis: 100%; order: 3; margin: .8rem 0 0; text-align: left; }
+.stand__spruch { font-size: 1.5rem; }
+.stand__status { font-size: 1.05rem; }
 
-.balken { margin-top: 1.1rem; }
-.balken__spur { height: 4.5rem; }
-.balken__ziel { top: -.625rem; bottom: -.625rem; }
-.balken__etappen { height: 4.5rem; }
-.etappe { width: 3.6rem; height: 3.6rem; }
-
-.skala { height: 1.5rem; margin-top: .7rem; font-size: 1.05rem; }
+.verlauf-huelle { margin-top: 0; }
+.verlauf--handy { display: none; }
+.verlauf--beamer { display: block; max-height: 15rem; }
 
 /* --- Eintraege --- */
 
