@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Die oeffentliche Klassenseite hinter dem geheimen Link: der Health-Balken.
+ * Die oeffentliche Klassenseite hinter dem geheimen Link: der Punktestand als
+ * Linie ueber das Schuljahr.
  *
  * ?ansicht=beamer erzwingt das Beamer-Layout (1280x720 bis 1920x1080, ohne
  * Scrollen). Ohne Parameter waehlt das Stylesheet nach der Bildschirmgroesse.
@@ -12,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Klassenziel\Anzeige\Anzeigedaten;
+use Klassenziel\Anzeige\Verlaufsbild;
 use Klassenziel\Anzeige\Zugang;
 use Klassenziel\Support\Kern;
 
@@ -24,12 +26,18 @@ $anzahl = $beamer
     ? Anzeigedaten::EINTRAEGE_BEAMER
     : Zugang::zahl('eintraege', Anzeigedaten::EINTRAEGE_HANDY, 1, Anzeigedaten::EINTRAEGE_HOECHSTENS);
 
+$anzeige = $kern->anzeigedienst()->fuer($klasse, new DateTimeImmutable('today'), $anzahl);
+
 $kern->zeichneOeffentlich('anzeige.twig', [
-    'anzeige' => $kern->anzeigedienst()->fuer($klasse, new DateTimeImmutable('today'), $anzahl),
+    'anzeige' => $anzeige,
+    'verlaufsbild' => [
+        'beamer' => Verlaufsbild::fuer($anzeige['verlauf'], $anzeige['ziel'], $anzeige['stimmung']['etappen'], 'beamer'),
+        'handy' => Verlaufsbild::fuer($anzeige['verlauf'], $anzeige['ziel'], $anzeige['stimmung']['etappen'], 'handy'),
+    ],
     'beamer' => $beamer,
     'anzahl' => $anzahl,
-    // Fuer die Animation "vom alten zum neuen Wert": unter diesem Merker
-    // legt das Geraet den zuletzt gesehenen Stand ab. Die Kennung der
-    // Klasse ist kein Geheimnis; der Link waere eines.
+    // Unter diesem Merker legt das Geraet den zuletzt gesehenen Stand ab -
+    // daran erkennt das Skript, welche Smiley-Etappe seitdem neu erreicht
+    // ist. Die Kennung der Klasse ist kein Geheimnis; der Link waere eines.
     'merker' => 'klassenziel-' . $klasse->id,
 ]);

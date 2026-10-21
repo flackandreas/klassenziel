@@ -4,9 +4,12 @@
   auf dem Beamer-PC und jedem Handy gleich aus und laedt keine Schrift nach.
 
   Farben nur ueber Klassen (CSP), die stehen in anzeige.css.
+
+  lage {x, y, groesse} setzt das Gesicht innerhalb einer anderen Grafik an
+  eine Stelle (Etappen neben der Verlaufslinie).
 #}
-{% macro gesicht(stufe, klasse = '') %}
-<svg class="gesicht{% if klasse %} {{ klasse }}{% endif %}" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+{% macro gesicht(stufe, klasse = '', lage = null) %}
+<svg class="gesicht{% if klasse %} {{ klasse }}{% endif %}" viewBox="0 0 40 40"{% if lage %} x="{{ lage.x }}" y="{{ lage.y }}" width="{{ lage.groesse }}" height="{{ lage.groesse }}"{% endif %} aria-hidden="true" focusable="false">
     <circle class="gesicht__kopf" cx="20" cy="20" r="18"/>
 {% if stufe == 0 %}
     <path class="gesicht__linie" d="M11.5 12.5 L16.5 10.5 M28.5 12.5 L23.5 10.5"/>

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Klassenziel\Anzeige\Anzeigedaten;
 use Klassenziel\Anzeige\Countdown;
 use Klassenziel\Klassen\Klasse;
+use Klassenziel\Wertung\Ferienkalender;
 use Klassenziel\Wertung\Gewichtung;
 use Klassenziel\Wertung\Wertung;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +37,8 @@ final class AnzeigedatenTest extends TestCase
         );
     }
 
-    private static function wertung(int $stand = 54): Wertung
+    /** @param list<array{datum: string, stand: int}> $verlauf */
+    private static function wertung(int $stand = 54, array $verlauf = []): Wertung
     {
         return new Wertung(
             stand: $stand,
@@ -46,7 +48,7 @@ final class AnzeigedatenTest extends TestCase
                 ['art' => 'vorfall', 'id' => 12, 'datum' => '2026-10-01', 'richtung' => 'negativ', 'stufe' => 'klein', 'punkte' => -1, 'stand' => 51],
                 ['art' => 'vorfall', 'id' => 13, 'datum' => '2026-10-06', 'richtung' => 'positiv', 'stufe' => 'mittel', 'punkte' => 3, 'stand' => 54],
             ],
-            verlauf: [],
+            verlauf: $verlauf,
             wochenbilanz: 6,
             wochePositiv: 2,
             wocheNegativ: 0,
@@ -75,9 +77,10 @@ final class AnzeigedatenTest extends TestCase
         $daten = self::daten();
 
         self::assertSame(
-            ['klasse', 'stand', 'ziel', 'fehlt', 'ziel_erreicht', 'stimmung', 'countdown', 'woche', 'wertung', 'quelle', 'eintraege', 'weitere'],
+            ['klasse', 'stand', 'ziel', 'fehlt', 'ziel_erreicht', 'stimmung', 'countdown', 'woche', 'wertung', 'quelle', 'eintraege', 'weitere', 'verlauf'],
             array_keys($daten)
         );
+        self::assertSame(['start', 'ende', 'stichtag', 'punkte', 'ferien'], array_keys($daten['verlauf']));
         self::assertSame(['name', 'schuljahr', 'belohnung'], array_keys($daten['klasse']));
         self::assertSame(['stufe', 'spruch', 'status', 'naechste', 'fehlt_naechste', 'naechste_ist_ziel', 'etappen'], array_keys($daten['stimmung']));
         foreach ($daten['stimmung']['etappen'] as $etappe) {
@@ -93,6 +96,39 @@ final class AnzeigedatenTest extends TestCase
         self::assertStringNotContainsString('"id"', $json);
         self::assertStringNotContainsString('R9d', $json);
         self::assertStringNotContainsString('Schüler*in', $json);
+    }
+
+    public function testVerlaufNurMitDatumUndStandAchseBisZumStichtag(): void
+    {
+        $verlauf = [
+            ['datum' => '2026-09-14', 'stand' => 50],
+            ['datum' => '2026-09-20', 'stand' => 52],
+            ['datum' => '2026-09-27', 'stand' => 51],
+        ];
+        $ferien = new Ferienkalender([
+            ['von' => '2026-08-01', 'bis' => '2026-09-11'],   // Sommerferien davor
+            ['von' => '2026-10-26', 'bis' => '2026-11-06'],
+            ['von' => '2027-07-29', 'bis' => '2027-09-10'],   // nach dem Stichtag
+        ]);
+
+        $v = Anzeigedaten::baue(self::klasse(), self::wertung(51, $verlauf), Gewichtung::vorgabe(), self::vorfaelle(), new DateTimeImmutable('2026-09-28'), 20, 0, $ferien)['verlauf'];
+
+        self::assertSame('2026-09-14', $v['start']);
+        self::assertSame('2027-06-30', $v['ende']);
+        self::assertSame('2027-06-30', $v['stichtag']);
+        self::assertSame($verlauf, $v['punkte']);
+        foreach ($v['punkte'] as $punkt) {
+            self::assertSame(['datum', 'stand'], array_keys($punkt));
+        }
+        self::assertSame([['von' => '2026-10-26', 'bis' => '2026-11-06']], $v['ferien']);
+    }
+
+    public function testOhneStichtagEndetDieAchseAmEndeDesSchuljahres(): void
+    {
+        $v = Anzeigedaten::baue(self::klasse(null), self::wertung(), Gewichtung::vorgabe(), self::vorfaelle(), new DateTimeImmutable('2026-10-19'))['verlauf'];
+
+        self::assertNull($v['stichtag']);
+        self::assertSame('2027-07-31', $v['ende']);
     }
 
     public function testNeuesteZuerstMitKurztextNurBeiFreigabe(): void

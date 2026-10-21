@@ -52,4 +52,15 @@ final class Ferienkalender
 
         return true;
     }
+
+    /**
+     * Die Zeitraeume selbst - fuer die Ferienstreifen hinter der Linie auf der
+     * oeffentlichen Seite. Ferientermine der Schule, nichts ueber die Klasse.
+     *
+     * @return list<array{von: string, bis: string}>
+     */
+    public function zeitraeume(): array
+    {
+        return $this->zeitraeume;
+    }
 }

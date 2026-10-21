@@ -37,7 +37,8 @@ final class Anzeigedienst
             ))),
             $heute,
             $anzahl,
-            $versatz
+            $versatz,
+            $this->standdienst->ferien()
         );
     }
 

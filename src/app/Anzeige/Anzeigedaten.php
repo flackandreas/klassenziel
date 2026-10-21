@@ -7,6 +7,7 @@ namespace Klassenziel\Anzeige;
 use DateTimeImmutable;
 use Klassenziel\Klassen\Klasse;
 use Klassenziel\Wertung\Bewertung;
+use Klassenziel\Wertung\Ferienkalender;
 use Klassenziel\Wertung\Gewichtung;
 use Klassenziel\Wertung\Wertung;
 
@@ -21,6 +22,11 @@ use Klassenziel\Wertung\Wertung;
  *
  * Ohne Freigabe steht statt des Kurztexts die Bezeichnung der Kategorie,
  * etwa "Kleiner negativer Eintrag".
+ *
+ * Dazu der Verlauf fuer die Linie: der Stand am Ende jeder Woche als Datum
+ * und Zahl, die Achse von Start bis Stichtag und die Ferien der Schule. Das
+ * sind Summen, kein einzelner Eintrag - was sie veraendert hat, steht
+ * ohnehin in den Eintraegen darunter.
  */
 final class Anzeigedaten
 {
@@ -45,6 +51,7 @@ final class Anzeigedaten
         DateTimeImmutable $heute,
         int $anzahl = self::EINTRAEGE_HANDY,
         int $versatz = 0,
+        Ferienkalender $ferien = new Ferienkalender(),
     ): array {
         $anzahl = max(1, min(self::EINTRAEGE_HOECHSTENS, $anzahl));
         $versatz = max(0, $versatz);
@@ -86,6 +93,49 @@ final class Anzeigedaten
             'quelle' => $klasse->datenstand?->format('d.m.Y'),
             'eintraege' => $eintraege,
             'weitere' => count($neuesteZuerst) > $versatz + $anzahl,
+            'verlauf' => self::verlauf($klasse, $wertung, $ferien),
+        ];
+    }
+
+    /**
+     * Die Daten der Linie. Die Achse endet am Stichtag; ohne Stichtag am Ende
+     * des Schuljahres (31. Juli), damit die Linie nicht die ganze Breite fuellt
+     * und so tut, als waere das Jahr schon um.
+     *
+     * @return array{start: string, ende: string, stichtag: ?string, punkte: list<array{datum: string, stand: int}>, ferien: list<array{von: string, bis: string}>}
+     */
+    private static function verlauf(Klasse $klasse, Wertung $wertung, Ferienkalender $ferien): array
+    {
+        $start = $klasse->startdatum->setTime(0, 0);
+        $ende = $klasse->stichtag?->setTime(0, 0)
+            ?? $start->setDate((int) $start->format('Y') + ((int) $start->format('n') >= 8 ? 1 : 0), 7, 31);
+
+        $punkte = array_map(static fn (array $p): array => [
+            'datum' => (string) $p['datum'],
+            'stand' => (int) $p['stand'],
+        ], $wertung->verlauf);
+
+        // Liegt der letzte Punkt hinter dem Achsenende (Stichtag spaeter
+        // vorverlegt), waechst die Achse mit, statt ihn abzuschneiden.
+        if ($punkte !== [] && $punkte[count($punkte) - 1]['datum'] > $ende->format('Y-m-d')) {
+            $ende = new DateTimeImmutable($punkte[count($punkte) - 1]['datum']);
+        }
+        if ($ende <= $start) {
+            $ende = $start->modify('+7 days');
+        }
+
+        $vonBis = [$start->format('Y-m-d'), $ende->format('Y-m-d')];
+        $zeitraeume = array_values(array_filter(
+            $ferien->zeitraeume(),
+            static fn (array $z): bool => $z['bis'] >= $vonBis[0] && $z['von'] <= $vonBis[1]
+        ));
+
+        return [
+            'start' => $vonBis[0],
+            'ende' => $vonBis[1],
+            'stichtag' => $klasse->stichtag?->format('Y-m-d'),
+            'punkte' => $punkte,
+            'ferien' => array_map(static fn (array $z): array => ['von' => $z['von'], 'bis' => $z['bis']], $zeitraeume),
         ];
     }
 

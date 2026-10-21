@@ -34,7 +34,7 @@ Stand: 19.10.2026 · Grundlage: `planung-schulos-klassenziel.md` · am 19.10.202
 4. **Anmeldung nur über das Portal**, ohne eigene Anmeldemaske (so macht es auch Auszeit). Die Tabelle `konten` speichert nur `sso_sub`, den Anzeigenamen und ob die Person zur Verwaltung gehört. Das Kürzel speichert sie nicht: So kann der Datenschutz-Test ohne Ausnahme prüfen, dass kein Lehrkraftkürzel im Klartext in der Datenbank steht.
 5. **Zuständigkeit** über eine eigene Tabelle `klassen_lehrkraefte`. Über vorhandene Rollen geht es nicht, weil das Portal keine Klassen überträgt.
 6. **JavaScript ohne Build-Schritt** (Vanilla, wie in allen PHP-Modulen). Kein TypeScript, kein Node im Abbild.
-7. **Balken und Simulationskurve als SVG vom Server.** So bleibt die CSP streng (`style-src 'self'`), und die Anzeige funktioniert auch ohne JavaScript. JavaScript übernimmt nur Animation, Aktualisierung und „Weitere laden“.
+7. **Verlaufslinie und Simulationskurve als SVG vom Server.** So bleibt die CSP streng (`style-src 'self'`), und die Anzeige funktioniert auch ohne JavaScript. JavaScript übernimmt nur Animation, Aktualisierung und „Weitere laden“.
 8. **Unicode-NFC** über `symfony/polyfill-intl-normalizer` (reines PHP) statt `ext-intl`. Das spart rund 30 MB ICU im Abbild auf dem Pi.
 
 ## 3. Ergänzungen, die die Planung präzisieren
