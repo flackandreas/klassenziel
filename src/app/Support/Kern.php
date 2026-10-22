@@ -30,6 +30,9 @@ use Twig\TwigFunction;
  */
 final class Kern
 {
+    /** Abfrageparameter fuer "Formular kam ohne Sitzung an". */
+    public const ABGELAUFEN = 'abgelaufen';
+
     private static ?self $eine = null;
 
     private ?Environment $twig = null;
@@ -214,7 +217,26 @@ final class Kern
         Sitzung::beenden();
 
         $ziel = Anfrage::sicheresZiel((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH));
+
+        // Ein Formular ohne Sitzung ist verloren. Das soll die Lehrkraft nach
+        // der neuen Anmeldung lesen, statt zu glauben, es sei gespeichert.
+        if (self::istPost()) {
+            $ziel .= '?' . self::ABGELAUFEN . '=1';
+        }
+
         self::weiterleiten('/anmelden?weiter=' . rawurlencode($ziel));
+    }
+
+    /**
+     * Der Hinweis nach einem Formular, das ohne Sitzung ankam.
+     *
+     * @param array<string,mixed> $abfrage $_GET
+     */
+    public static function hinweisAbgelaufen(array $abfrage): ?string
+    {
+        return ($abfrage[self::ABGELAUFEN] ?? null) === '1'
+            ? 'Ihre Anmeldung war abgelaufen. Die Änderung von eben ist deshalb nicht gespeichert – bitte noch einmal eingeben und speichern.'
+            : null;
     }
 
     /** Formulare nur per POST und mit gueltigem Token. */
@@ -301,7 +323,7 @@ final class Kern
             'konto' => $konto,
             'csrf' => Sitzung::csrfToken(),
             'meldung_erfolg' => Sitzung::holeMeldung('erfolg'),
-            'meldung_fehler' => Sitzung::holeMeldung('fehler'),
+            'meldung_fehler' => Sitzung::holeMeldung('fehler') ?? self::hinweisAbgelaufen($_GET),
             'portal_adresse' => $this->portalAdresse(),
         ], $daten));
     }

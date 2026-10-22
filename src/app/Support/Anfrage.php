@@ -222,6 +222,27 @@ final class Anfrage
      * Ohne diese Pruefung waere jeder "weiter"-Parameter eine offene
      * Weiterleitung auf eine fremde Anmeldeseite.
      */
+    /**
+     * Die Herkunft einer Adresse - Schema, Host und Port - fuer die
+     * Content-Security-Policy. Nur http und https, und nur ein Host aus
+     * Buchstaben, Ziffern, Punkt und Bindestrich: was hier herauskommt, steht
+     * woertlich in einer Kopfzeile.
+     */
+    public static function ursprung(string $adresse): ?string
+    {
+        $teile = parse_url(trim($adresse));
+        if (!is_array($teile) || !isset($teile['scheme'], $teile['host'])) {
+            return null;
+        }
+
+        $schema = strtolower($teile['scheme']);
+        if (!in_array($schema, ['http', 'https'], true) || preg_match('/^[a-z0-9.-]+$/i', $teile['host']) !== 1) {
+            return null;
+        }
+
+        return $schema . '://' . strtolower($teile['host']) . (isset($teile['port']) ? ':' . $teile['port'] : '');
+    }
+
     public static function sicheresZiel(?string $ziel): string
     {
         if ($ziel === null || $ziel === '' || $ziel[0] !== '/' || str_starts_with($ziel, '//')) {
