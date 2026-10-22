@@ -26,7 +26,8 @@ hochlädt.
 > - Datenschutz-Test über Datenbank, Ablage, Seiten und Protokolle; Archivieren;
 >   Betrieb im Verbund
 >
-> Offen ist der Probelauf auf dem Pi, danach der Mac mini. Der Plan steht in
+> Seit dem 20.10.2026 läuft Klassenziel auf dem Mac mini der Schule, seit dem
+> 21.10.2026 mit der Verlaufslinie statt des Balkens. Der Plan steht in
 > [`UMSETZUNGSPLAN.md`](UMSETZUNGSPLAN.md). Wie Klassenziel auf dem Mac mini
 > läuft, steht im Betriebshandbuch des Portals, `deploy/MAC-MINI.md`,
 > Abschnitt 11.
