@@ -61,15 +61,24 @@ trait Testserver
     }
 
     /**
+     * Holt eine Seite, mit $formular als POST.
+     *
+     * @param array<string,string>|null $formular
      * @return array{status: int, koepfe: array<string,string>, inhalt: string}
      */
-    private static function hole(string $pfad): array
+    private static function hole(string $pfad, ?array $formular = null): array
     {
-        $kontext = stream_context_create(['http' => [
+        $optionen = [
             'ignore_errors' => true,
             'follow_location' => 0,
             'timeout' => 10,
-        ]]);
+        ];
+        if ($formular !== null) {
+            $optionen['method'] = 'POST';
+            $optionen['header'] = 'Content-Type: application/x-www-form-urlencoded';
+            $optionen['content'] = http_build_query($formular);
+        }
+        $kontext = stream_context_create(['http' => $optionen]);
 
         $inhalt = @file_get_contents('http://127.0.0.1:' . self::$port . $pfad, false, $kontext);
         /** @var list<string> $roh */

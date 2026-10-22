@@ -42,10 +42,16 @@ if (Anfrage::istHttps()) {
 // Kein 'unsafe-inline', auch nicht bei style-src: die Vorlagen kommen ohne
 // style- und on*-Attribute aus. Balken und Kurven sind SVG vom Server; das
 // wenige JavaScript liegt in public/js/.
+//
+// form-action gilt fuer die ganze Kette der Weiterleitungen nach einem
+// Formular. Ist die Sitzung abgelaufen, fuehrt sie ueber die Anmeldung am
+// Portal - ohne das Portal hier bliebe der Browser stumm auf dem Formular
+// stehen, und die Eingabe saehe gespeichert aus, obwohl sie es nicht ist.
+$portal = Anfrage::ursprung((string) umgebung('PORTAL_ISSUER', ''));
 header(
     "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; "
     . "img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; "
-    . "base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    . "base-uri 'self'; form-action 'self'" . ($portal !== null ? ' ' . $portal : '') . "; frame-ancestors 'none'"
 );
 
 // --- Wegweiser ------------------------------------------------------------
