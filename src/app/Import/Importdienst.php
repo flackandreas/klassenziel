@@ -196,8 +196,19 @@ final class Importdienst
                 $this->db->prepare('INSERT IGNORE INTO faecher (kuerzel) VALUES (?)')->execute([$fach]);
             }
             foreach ($plan['kategorien'] as $kategorie) {
-                $this->db->prepare("INSERT IGNORE INTO kategorie_vorgaben (webuntis_kategorie, richtung) VALUES (?, 'pruefen')")
-                    ->execute([$kategorie]);
+                // Eine Vorschau von vor der Ableitung aus der Kategoriegruppe
+                // fuehrt nur den Namen.
+                $eintrag = is_array($kategorie) ? $kategorie : ['name' => (string) $kategorie];
+                $richtung = in_array($eintrag['richtung'] ?? null, ['positiv', 'negativ', 'neutral'], true) ? $eintrag['richtung'] : 'pruefen';
+                $stufe = in_array($richtung, ['positiv', 'negativ'], true) && in_array($eintrag['stufe'] ?? null, ['klein', 'mittel', 'gross'], true)
+                    ? $eintrag['stufe']
+                    : null;
+                if ($stufe === null && $richtung !== 'neutral') {
+                    $richtung = 'pruefen';
+                }
+
+                $this->db->prepare('INSERT IGNORE INTO kategorie_vorgaben (webuntis_kategorie, richtung, stufe) VALUES (?, ?, ?)')
+                    ->execute([(string) $eintrag['name'], $richtung, $stufe]);
             }
 
             $neueIds = [];
@@ -390,8 +401,13 @@ final class Importdienst
             }
 
             $wertung = $this->kategorien->fuer($klasse->id, $zeile->kategorie, $zeile->kategoriegruppe);
-            if ($zeile->kategorie !== '' && $wertung['richtung'] === 'pruefen') {
-                $kategorien[$zeile->kategorie] = true;
+            // Neue Kategorien bekommen eine Vorgabe: die aus ihrer
+            // Kategoriegruppe, sonst "pruefen". Die Verwaltung sieht und
+            // aendert sie unter Vorgaben.
+            if ($zeile->kategorie !== '' && !Kategoriezuordnung::istNeutraleGruppe($zeile->kategoriegruppe)
+                && !$this->kategorien->hatVorgabe($zeile->kategorie)) {
+                $kategorien[$zeile->kategorie] ??= ['name' => $zeile->kategorie]
+                    + Kategoriezuordnung::ausGruppe($zeile->kategorie, $zeile->kategoriegruppe);
             }
 
             $teile = $zeile->istKlasseneintrag() ? [] : Namensbestandteile::aus($zeile->name);
@@ -503,7 +519,7 @@ final class Importdienst
             'neue_vorfaelle' => $neue,
             'zuordnungen' => $zuordnungen,
             'faecher' => array_keys($faecher),
-            'kategorien' => array_keys($kategorien),
+            'kategorien' => array_values($kategorien),
             'zaehler' => [
                 'zeilen_neu' => count($planZeilen),
                 'zeilen_duplikat' => $duplikate,

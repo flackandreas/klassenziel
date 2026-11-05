@@ -307,6 +307,12 @@ textarea { min-height: 90px; resize: vertical; }
 .vorfallliste__text { display: block; }
 .vorfallliste__original { display: block; color: var(--text-leise); font-size: .92rem; }
 
+/* Sammelentscheidung: Haken links neben dem Eintrag, eigene Klickflaeche. */
+.vorfallliste__eintrag--wahl { display: flex; align-items: stretch; }
+.vorfallliste__eintrag--wahl .vorfallliste__link { flex: 1; min-width: 0; }
+.vorfallliste__wahl { display: flex; align-items: flex-start; padding: 17px 0 16px 20px; cursor: pointer; }
+.vorfallliste__wahl input { width: 20px; height: 20px; margin: 0; accent-color: var(--blau); }
+
 /* --- Vorfall --- */
 
 .originaltext {

@@ -8,6 +8,8 @@ use Klassenziel\Import\Importdienst;
 use Klassenziel\Konten\Konto;
 use Klassenziel\Sicherheit\Schluessel;
 use Klassenziel\Sicherheit\Tresor;
+use Klassenziel\Wertung\Bewertung;
+use Klassenziel\Wertung\Kategoriezuordnung;
 use PDO;
 
 /**
@@ -154,6 +156,58 @@ final class VorfallRepository
         ]);
 
         $this->neuBerechnen($klasseId);
+    }
+
+    /**
+     * Sammelentscheidung: mehrere offene Vorfaelle auf einmal "ohne Text
+     * zaehlen".
+     *
+     * Nur, was schon zaehlt - offen und eingestuft, meist ueber die Kategorie.
+     * Was noch einzustufen ist, bleibt in der Pruefliste; so aendert die
+     * Sammelentscheidung keinen Punktestand. Die Einstufung bleibt, wie sie
+     * ist: wer der Kategorie folgt, folgt ihr weiter.
+     *
+     * @param list<int> $ids die ausgewaehlten Vorfaelle
+     * @return int wie viele uebernommen wurden
+     */
+    public function ohneTextUebernehmen(int $klasseId, array $ids, Kategoriezuordnung $zuordnung, Konto $konto): int
+    {
+        $gewaehlt = array_flip($ids);
+        $passend = [];
+        foreach ($this->fuerKlasse($klasseId, 'offen') as $vorfall) {
+            if (isset($gewaehlt[(int) $vorfall['id']]) && self::zaehltSchon($vorfall, $zuordnung)) {
+                $passend[] = (int) $vorfall['id'];
+            }
+        }
+
+        if ($passend === []) {
+            return 0;
+        }
+
+        $anweisung = $this->verbindung->prepare(
+            "UPDATE vorfaelle
+                SET status = 'ohne_text', kurztext = NULL, moeglich_zu = NULL, entschieden_am = NOW(), entschieden_von = ?
+              WHERE klasse_id = ? AND status = 'offen' AND id IN (" . implode(',', array_fill(0, count($passend), '?')) . ')'
+        );
+        $anweisung->execute([$konto->id, $klasseId, ...$passend]);
+        $anzahl = $anweisung->rowCount();
+
+        if ($anzahl > 0) {
+            $this->neuBerechnen($klasseId);
+        }
+
+        return $anzahl;
+    }
+
+    /**
+     * Kommt ein Vorfall fuer die Sammelentscheidung in Frage? Offen, und er
+     * zaehlt schon.
+     *
+     * @param array<string,mixed> $vorfall
+     */
+    public static function zaehltSchon(array $vorfall, Kategoriezuordnung $zuordnung): bool
+    {
+        return $vorfall['status'] === 'offen' && Bewertung::wirksam($vorfall, $zuordnung)['zaehlt'];
     }
 
     /**

@@ -34,9 +34,27 @@
         <p><a class="knopf" href="/import">Export einlesen</a></p>
     </section>
 {% else %}
+{% if sammel > 0 %}
+<form id="sammel" class="karte karte--hinweis" method="post" action="/klassen/{{ klasse.id }}/pruefliste" aria-labelledby="titel-sammel">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2 id="titel-sammel">{{ sammel }} {{ sammel == 1 ? 'Vorfall zählt' : 'Vorfälle zählen' }} schon – ohne Text übernehmen?</h2>
+    <p>Angehakt ist unten, was über die Kategorie schon eingestuft ist. Ein Klick übernimmt das ohne Kurztext:
+       Es zählt wie bisher, öffentlich steht nur die Einstufung, etwa „Kleiner negativer Eintrag“.</p>
+    <p class="leise">Soll einer einen Kurztext bekommen oder nicht zählen, nehmen Sie den Haken weg und entscheiden ihn einzeln.</p>
+    <div class="aktionen">
+        <button class="knopf" type="submit" name="aktion" value="ohne_text">Angehakte ohne Text zählen</button>
+    </div>
+</form>
+{% endif %}
 <ol class="vorfallliste">
 {% for v in vorfaelle %}
-    <li class="karte vorfallliste__eintrag">
+    <li class="karte vorfallliste__eintrag{% if v.sammel %} vorfallliste__eintrag--wahl{% endif %}">
+        {% if v.sammel %}
+        <label class="vorfallliste__wahl">
+            <input type="checkbox" form="sammel" name="vorfall[]" value="{{ v.id }}" checked>
+            <span class="unsichtbar">Vorfall vom {{ v.datum|date('d.m.Y') }} ohne Text übernehmen</span>
+        </label>
+        {% endif %}
         <a href="/vorfaelle/{{ v.id }}" class="vorfallliste__link">
             <span class="vorfallliste__kopf">
                 <span>{{ v.datum|date('d.m.Y') }} · {{ v.fach_klartext ?: (v.fach_kuerzel ?: 'ohne Fach') }}</span>

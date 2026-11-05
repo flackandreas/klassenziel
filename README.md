@@ -102,6 +102,16 @@ Die Regeln stehen in der Planung (Abschnitt 5). So setzt der Code sie um:
 Einträge der Kategoriegruppe „Inf. / neutral“ werden ohne Text gespeichert, nur
 damit sie nicht erneut auftauchen, und nie gezählt.
 
+Eine neue Kategorie trägt der Import als Vorgabe der Schule ein. Die Richtung
+kommt aus ihrer Kategoriegruppe („positiv“ oder „negativ“), die Stufe aus dem
+Teil vor dem Schrägstrich („groß/Klasse“ ist groß, sonst klein). Ohne solche
+Gruppe steht sie auf „prüfen“. Die Verwaltung kann jede Vorgabe ändern
+(`Wertung/Kategoriezuordnung::ausGruppe`).
+
+In der Prüfliste lassen sich alle Vorfälle, die über ihre Kategorie schon
+zählen, in einem Schritt „ohne Text zählen“. Was einen Kurztext bekommen soll
+oder noch einzustufen ist, bleibt einzeln.
+
 ### Wertung
 
 Der Punktestand wird nicht gespeichert, sondern bei jedem Abruf berechnet

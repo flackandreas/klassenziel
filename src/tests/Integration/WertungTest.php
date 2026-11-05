@@ -280,6 +280,48 @@ final class WertungTest extends Datenbankfall
         self::assertSame(54, $this->stand());
     }
 
+    public function testSammelentscheidungUebernimmtNurWasSchonZaehlt(): void
+    {
+        self::assertSame(54, $this->stand());
+        $zuordnung = new \Klassenziel\Wertung\Kategoriezuordnung($this->db());
+        $ohneKategorie = $this->vorfallAm('2026-10-06');
+
+        // Alle fuenf offenen angehakt, dazu eine erfundene Kennung.
+        $ids = array_map(static fn (array $v): int => (int) $v['id'], $this->vorfaelle->fuerKlasse($this->klasseId));
+        $anzahl = $this->vorfaelle->ohneTextUebernehmen($this->klasseId, [...$ids, 999999], $zuordnung, $this->lehrerin);
+
+        self::assertSame(4, $anzahl, 'Der Eintrag ohne Kategorie ist noch einzustufen und bleibt offen.');
+        self::assertSame(54, $this->stand(), 'Die Sammelentscheidung aendert keinen Punktestand.');
+        self::assertSame(1, $this->vorfaelle->offeneAnzahl($this->klasseId));
+        self::assertSame('offen', $this->vorfaelle->eines($ohneKategorie)['status'] ?? null);
+
+        $vorfall = $this->vorfaelle->eines($this->vorfallAm('2026-10-05'));
+        self::assertSame('ohne_text', $vorfall['status'] ?? null);
+        self::assertSame($this->lehrerin->id, (int) ($vorfall['entschieden_von'] ?? 0));
+        self::assertSame(0, (int) ($vorfall['manuell_bewertet'] ?? 1), 'Er folgt weiter der Kategorie.');
+
+        // Ein zweites Mal gibt es nichts mehr zu uebernehmen.
+        self::assertSame(0, $this->vorfaelle->ohneTextUebernehmen($this->klasseId, $ids, $zuordnung, $this->lehrerin));
+    }
+
+    public function testSammelentscheidungNurInDerEigenenKlasse(): void
+    {
+        $andere = $this->klassen->anlegen(Klassendaten::ausEingabe([
+            'anzeigename' => 'Klasse 9e', 'export_kuerzel' => 'R9e', 'schuljahr' => '2026/27',
+            'belohnung' => 'Zoo', 'startdatum' => '2026-09-14', 'stichtag' => '', 'startwert' => '50', 'zielwert' => '70',
+        ]), $this->lehrerin);
+
+        $anzahl = $this->vorfaelle->ohneTextUebernehmen(
+            $andere,
+            [$this->vorfallAm('2026-09-16')],
+            new \Klassenziel\Wertung\Kategoriezuordnung($this->db()),
+            $this->lehrerin
+        );
+
+        self::assertSame(0, $anzahl);
+        self::assertSame(5, $this->vorfaelle->offeneAnzahl($this->klasseId));
+    }
+
     public function testOffeneUndNaechster(): void
     {
         // 5 offene: 16.09., 01.10., 05.10., 06.10., 09.10. - der neutrale
