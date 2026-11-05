@@ -149,7 +149,9 @@ final class OeffentlicheAnzeigeTest extends Datenbankfall
         self::assertMatchesRegularExpression('#href="/css/anzeige-beamer\.css\?v=\d+">#', $html);
         self::assertStringContainsString('anzeige--beamer', $html);
         self::assertStringNotContainsString('Weitere laden', $html);
-        self::assertSame(5, substr_count($html, '<li class="eintrag '));
+        // Alle neun Eintraege, nicht nur die fuenf, die in die Karte passen:
+        // Die Liste scrollt am Beamer in sich.
+        self::assertSame(9, substr_count($html, '<li class="eintrag '));
         // Das Layout steht fest: nur die breite Linie, keine Tabelle.
         self::assertStringContainsString('class="verlauf verlauf--beamer"', $html);
         self::assertStringNotContainsString('verlauf--handy', $html);

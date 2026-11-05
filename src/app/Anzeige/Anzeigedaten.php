@@ -30,7 +30,6 @@ use Klassenziel\Wertung\Wertung;
  */
 final class Anzeigedaten
 {
-    public const EINTRAEGE_BEAMER = 5;
     public const EINTRAEGE_HANDY = 20;
     public const EINTRAEGE_HOECHSTENS = 200;
     public const WOCHENBONUS_TEXT = 'Wochenbonus: Woche ohne großen Eintrag';

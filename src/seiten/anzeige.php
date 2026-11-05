@@ -7,9 +7,9 @@ declare(strict_types=1);
  * Linie ueber das Schuljahr.
  *
  * ?ansicht=beamer erzwingt das Beamer-Layout (1280x720 bis 1920x1080, ohne
- * Scrollen). Ohne Parameter waehlt das Stylesheet nach der Bildschirmgroesse.
- * ?eintraege=40 zeigt mehr Eintraege - der Weg fuer "Weitere laden" ohne
- * JavaScript.
+ * Scrollen; nur die Eintraege scrollen in ihrer Karte). Ohne Parameter waehlt
+ * das Stylesheet nach der Bildschirmgroesse. ?eintraege=40 zeigt mehr
+ * Eintraege - der Weg fuer "Weitere laden" ohne JavaScript.
  */
 
 use Klassenziel\Anzeige\Anzeigedaten;
@@ -22,9 +22,7 @@ use Klassenziel\Support\Kern;
 $klasse = Zugang::klasse($kern);
 
 $beamer = ($_GET['ansicht'] ?? '') === 'beamer';
-$anzahl = $beamer
-    ? Anzeigedaten::EINTRAEGE_BEAMER
-    : Zugang::zahl('eintraege', Anzeigedaten::EINTRAEGE_HANDY, 1, Anzeigedaten::EINTRAEGE_HOECHSTENS);
+$anzahl = Zugang::zahl('eintraege', Anzeigedaten::EINTRAEGE_HANDY, 1, Anzeigedaten::EINTRAEGE_HOECHSTENS);
 
 $anzeige = $kern->anzeigedienst()->fuer($klasse, new DateTimeImmutable('today'), $anzahl);
 

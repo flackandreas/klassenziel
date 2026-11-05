@@ -1,6 +1,6 @@
 /*
- * Beamer-Layout der Klassenseite (Referenz 1280x720, sauber bis 1920x1080,
- * ohne Scrollen).
+ * Beamer-Layout der Klassenseite (Referenz 1280x720, sauber bis 1920x1080).
+ * Die Seite scrollt nicht, nur die Liste der Eintraege in ihrer Karte.
  *
  * Geladen mit media="all" bei ?ansicht=beamer, sonst mit einer Medienabfrage
  * fuer grosse, nicht zu schmale Bildschirme. Alle Masse in rem; die
@@ -56,7 +56,7 @@ body { height: 100vh; overflow: hidden; }
 /* --- Punktestand --- */
 
 /* Zahl, Gesicht und Spruch links, die Linie rechts daneben: So bleibt die
-   Karte niedrig genug, dass darunter fuenf Eintraege ohne Scrollen passen. */
+   Karte niedrig genug, dass darunter fuenf Eintraege auf einen Blick passen. */
 .anzeige__stand {
     display: grid;
     grid-template-columns: 17rem minmax(0, 1fr);
@@ -78,9 +78,19 @@ body { height: 100vh; overflow: hidden; }
 
 /* --- Eintraege --- */
 
+/* Die Liste fuellt die Karte bis unten und scrollt in sich - die Seite
+   selbst bleibt stehen. */
 .anzeige__eintraege { display: flex; flex-direction: column; min-height: 0; }
 .eintraege__hinweis { font-size: 1rem; }
-.eintraege { margin-top: .4rem; overflow: hidden; }
+.eintraege {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: .4rem;
+    padding-right: .5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
 
 .eintrag {
     grid-template-columns: 4rem 9rem minmax(0, 1fr) auto;
@@ -89,8 +99,6 @@ body { height: 100vh; overflow: hidden; }
     padding: .45rem 0;
     font-size: 1.1rem;
 }
-/* Am Beamer die fuenf neuesten, mehr passen nicht ohne Scrollen. */
-.eintrag:nth-child(n + 6) { display: none; }
 
 .eintrag__datum { display: block; grid-area: datum; color: var(--text-leise); font-variant-numeric: tabular-nums; }
 .eintrag__fach {
