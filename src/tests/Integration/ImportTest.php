@@ -191,6 +191,78 @@ final class ImportTest extends Datenbankfall
         self::assertSame('2026-10-26 12:00', $klasse?->datenstand?->format('Y-m-d H:i'));
     }
 
+    public function testKategoriegruppeGibtNeuenKategorienDieRichtung(): void
+    {
+        $export = "Klasse\tDatum\tFach\tName\tBenutzer\tEintragskategorie\tKategoriegruppe\tText\n"
+            . "R9d\t13.10.26\tM-G\tTest Tina\tMIC\tpositiv/Schüler*in\tpositiv\tTina hilft beim Aufräumen. MIC\n"
+            . "R9d\t14.10.26\tD-M\tR9d\tNOP\tpositiver/Klasse\tpositiv\tSehr ruhige Stunde. NOP\n"
+            . "R9d\t15.10.26\tG\tMuster Max\tXYZ\tgroß/Pause\tnegativ\tMax verlässt das Gelände. XYZ\n"
+            . "R9d\t15.10.26\tE-G\tBeispiel Ben\tKLM\tSonstiges\t\tBen hat das Heft vergessen. KLM\n";
+
+        $id = $this->dienst->vorschau($export, 'ClassregEventPerKlasse_20261019_1331.csv', $this->lehrerin, $this->jetzt);
+        self::assertSame(1, $this->plan($id)['zaehler']['ohne_einstufung'], 'Nur "Sonstiges" hat keine Gruppe mit Richtung.');
+        $this->dienst->bestaetigen($id, $this->lehrerin, $this->jetzt);
+
+        $vorgaben = $this->db()->query(
+            "SELECT webuntis_kategorie, richtung, stufe FROM kategorie_vorgaben
+              WHERE webuntis_kategorie IN ('positiv/Schüler*in', 'positiver/Klasse', 'groß/Pause', 'Sonstiges')
+              ORDER BY webuntis_kategorie"
+        )->fetchAll(PDO::FETCH_NUM);
+
+        self::assertSame([
+            ['Sonstiges', 'pruefen', null],
+            ['groß/Pause', 'negativ', 'gross'],
+            ['positiv/Schüler*in', 'positiv', 'klein'],
+            ['positiver/Klasse', 'positiv', 'klein'],
+        ], $vorgaben);
+    }
+
+    public function testMigrationHoltDieKategoriegruppeNach(): void
+    {
+        // So sah es vorher aus: der Import trug jede neue Kategorie als
+        // "pruefen" ein.
+        $this->db()->exec("INSERT INTO kategorie_vorgaben (webuntis_kategorie, richtung) VALUES
+            ('positiv/Schüler*in', 'pruefen'), ('groß/Pause', 'pruefen'), ('Gemischt', 'pruefen'), ('Ohne Gruppe', 'pruefen')");
+        $this->db()->exec("INSERT INTO kategorie_vorgaben (webuntis_kategorie, richtung, stufe) VALUES ('Entschieden', 'negativ', 'mittel')");
+
+        $vorfall = $this->db()->prepare(
+            "INSERT INTO vorfaelle (klasse_id, datum, lehrkraft_kennung, webuntis_kategorie, kategoriegruppe) VALUES (?, '2026-10-13', ?, ?, ?)"
+        );
+        foreach ([
+            ['positiv/Schüler*in', 'positiv'],
+            ['positiv/Schüler*in', 'positiv'],
+            ['groß/Pause', 'negativ'],
+            ['Gemischt', 'positiv'],
+            ['Gemischt', 'negativ'],
+            ['Ohne Gruppe', ''],
+            ['Entschieden', 'positiv'],
+        ] as [$kategorie, $gruppe]) {
+            $vorfall->execute([$this->klasseId, str_repeat('a', 64), $kategorie, $gruppe]);
+        }
+
+        $version = (int) $this->db()->query('SELECT version FROM vorgaben WHERE id = 1')->fetchColumn();
+
+        $sql = (string) file_get_contents(dirname(__DIR__, 2) . '/migrationen/008_kategorie_aus_gruppe.sql');
+        foreach (\Klassenziel\Support\Migrator::anweisungen($sql) as $anweisung) {
+            $this->db()->exec($anweisung);
+        }
+
+        $vorgaben = $this->db()->query(
+            "SELECT webuntis_kategorie, richtung, stufe FROM kategorie_vorgaben
+              WHERE webuntis_kategorie IN ('positiv/Schüler*in', 'groß/Pause', 'Gemischt', 'Ohne Gruppe', 'Entschieden')
+              ORDER BY webuntis_kategorie"
+        )->fetchAll(PDO::FETCH_NUM);
+
+        self::assertSame([
+            ['Entschieden', 'negativ', 'mittel'],
+            ['Gemischt', 'pruefen', null],
+            ['Ohne Gruppe', 'pruefen', null],
+            ['groß/Pause', 'negativ', 'gross'],
+            ['positiv/Schüler*in', 'positiv', 'klein'],
+        ], $vorgaben, 'Entschiedenes und Uneindeutiges bleibt, wie es ist.');
+        self::assertSame($version + 1, (int) $this->db()->query('SELECT version FROM vorgaben WHERE id = 1')->fetchColumn());
+    }
+
     public function testLoeschregelFuerOriginaltexte(): void
     {
         $this->importiere('export_beispiel.tsv');

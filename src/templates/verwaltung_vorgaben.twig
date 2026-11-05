@@ -35,8 +35,9 @@
 
 <form class="karte" method="post" action="/verwaltung/vorgaben">
     <h2>WebUntis-Kategorien</h2>
-    <p class="leise">Gilt für jede Klasse ohne eigene Zuordnung, auch rückwirkend. Neue Kategorien trägt der Import von selbst als „nicht zugeordnet“ ein –
-       etwa, wenn die Schule in WebUntis eine Kategorie „Lob“ einführt.</p>
+    <p class="leise">Gilt für jede Klasse ohne eigene Zuordnung, auch rückwirkend. Neue Kategorien trägt der Import von selbst ein – etwa, wenn die Schule
+       in WebUntis eine Kategorie „Lob“ einführt. Gehört sie dort zur Kategoriegruppe „positiv“ oder „negativ“, zählt sie gleich so:
+       „groß/…“ als groß, sonst klein. Ohne solche Gruppe steht sie auf „nicht zugeordnet“.</p>
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="hidden" name="aktion" value="kategorien">
     <div class="tabelle-huelle">

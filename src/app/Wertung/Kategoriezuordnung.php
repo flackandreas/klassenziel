@@ -9,10 +9,12 @@ use PDO;
 /**
  * Welche Richtung und Stufe hat eine WebUntis-Kategorie?
  *
- * Reihenfolge: die Zuordnung der Klasse, sonst die Vorgabe der Schule, sonst
- * "pruefen" - der Vorfall landet in der Pruefliste. Unabhaengig davon gilt:
- * Eintraege der Kategoriegruppe "Inf. / neutral" sind neutral. Sie zaehlen
- * nie und erscheinen nie oeffentlich (Planung, Abschnitt 5.5).
+ * Reihenfolge: die Zuordnung der Klasse, sonst die Vorgabe der Schule. Fuer
+ * eine Kategorie, die noch gar keine Vorgabe hat, gilt, was ihre
+ * Kategoriegruppe sagt (ausGruppe); der Import traegt genau das als Vorgabe
+ * ein. Sonst "pruefen" - der Vorfall landet in der Pruefliste. Unabhaengig
+ * davon gilt: Eintraege der Kategoriegruppe "Inf. / neutral" sind neutral. Sie
+ * zaehlen nie und erscheinen nie oeffentlich (Planung, Abschnitt 5.5).
  */
 final class Kategoriezuordnung
 {
@@ -41,7 +43,7 @@ final class Kategoriezuordnung
 
         $eintrag = $this->klasse($klasseId)[$kategorie] ?? $this->vorgaben()[$kategorie] ?? null;
         if ($eintrag === null) {
-            return ['richtung' => 'pruefen', 'stufe' => null];
+            return self::ausGruppe($kategorie, $kategoriegruppe);
         }
 
         /** @var 'positiv'|'negativ'|'neutral'|'pruefen' $richtung */
@@ -74,6 +76,50 @@ final class Kategoriezuordnung
     public static function istNeutraleGruppe(string $kategoriegruppe): bool
     {
         return str_contains(mb_strtolower($kategoriegruppe), 'neutral');
+    }
+
+    /** Gibt es fuer diese Kategorie schon eine Vorgabe der Schule? */
+    public function hatVorgabe(string $kategorie): bool
+    {
+        return isset($this->vorgaben()[$kategorie]);
+    }
+
+    /**
+     * Was die Kategoriegruppe aus WebUntis ueber eine Kategorie sagt, die
+     * noch niemand zugeordnet hat.
+     *
+     * Die Gruppe "positiv" oder "negativ" gibt die Richtung, der Teil vor dem
+     * Schraegstrich die Stufe: "groß/Klasse" ist gross, "klein/Schüler*in"
+     * klein. Fehlt die Stufe ("positiv/Schüler*in"), ist es klein - der
+     * kleinste Ausschlag, bis die Verwaltung es anders einstellt. Ohne Gruppe
+     * und ohne Kategorie bleibt es bei "pruefen".
+     *
+     * @return array{richtung: 'positiv'|'negativ'|'neutral'|'pruefen', stufe: ?string}
+     */
+    public static function ausGruppe(string $kategorie, string $kategoriegruppe): array
+    {
+        if (self::istNeutraleGruppe($kategoriegruppe)) {
+            return ['richtung' => 'neutral', 'stufe' => null];
+        }
+
+        $gruppe = mb_strtolower($kategoriegruppe);
+        $richtung = match (true) {
+            str_contains($gruppe, 'positiv') => 'positiv',
+            str_contains($gruppe, 'negativ') => 'negativ',
+            default => null,
+        };
+
+        if ($richtung === null || $kategorie === '') {
+            return ['richtung' => 'pruefen', 'stufe' => null];
+        }
+
+        $stufe = match (mb_strtolower(trim(explode('/', $kategorie)[0]))) {
+            'groß', 'gross' => 'gross',
+            'mittel' => 'mittel',
+            default => 'klein',
+        };
+
+        return ['richtung' => $richtung, 'stufe' => $stufe];
     }
 
     /** @return array<string, array{richtung: string, stufe: ?string}> */
