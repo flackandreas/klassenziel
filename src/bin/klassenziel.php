@@ -9,6 +9,8 @@ declare(strict_types=1);
  *   php bin/klassenziel.php status        Stand von Schema und Schluessel
  *   php bin/klassenziel.php schluessel    einen neuen Hauptschluessel ausgeben
  *   php bin/klassenziel.php aufraeumen    Ratenbremse, abgelaufene Vorschauen, alte Punktestaende
+ *   php bin/klassenziel.php demo [welt.json]  Demo-Schule anlegen (nur mit SCHULOS_DEMO=1,
+ *                                         nur in einer leeren Datenbank)
  *
  * aufraeumen ist fuer einen naechtlichen Aufruf gedacht (launchd auf dem Mac
  * mini, siehe Betriebshandbuch im Portal). Die Ratenbremse raeumt die
@@ -109,7 +111,34 @@ switch ($befehl) {
         ));
         exit(0);
 
+    case 'demo':
+        // Oeffentliche Demo (demo.schulos.de): legt die erfundene Schule aus
+        // schulos/deploy/demo-seed/welt.json an. Der naechtliche Reset leert
+        // die Datenbank vorher; auf vorhandene Daten schreibt der Befehl nie.
+        if (!umgebung_schalter('SCHULOS_DEMO', false)) {
+            $schimpfe('Klassenziel: demo laeuft nur mit SCHULOS_DEMO=1.');
+            exit(1);
+        }
+        $pfad = $argv[2] ?? (string) umgebung('SCHULOS_DEMO_WELT', '/demo/welt.json');
+        $inhalt = @file_get_contents($pfad);
+        $welt = is_string($inhalt) ? json_decode($inhalt, true) : null;
+        if (!is_array($welt)) {
+            $schimpfe('Klassenziel: ' . $pfad . ' fehlt oder ist kein JSON.');
+            exit(1);
+        }
+        try {
+            $meldungen = (new \Klassenziel\Demo\Demoschule(\Klassenziel\Support\Kern::eine()))
+                ->anlegen($welt, new DateTimeImmutable('today'));
+        } catch (\Throwable $e) {
+            $schimpfe('Klassenziel: Demo nicht angelegt: ' . $e->getMessage());
+            exit(1);
+        }
+        foreach ($meldungen as $meldung) {
+            $sage('Klassenziel: ' . $meldung);
+        }
+        exit(0);
+
     default:
-        $sage('Befehle: migrieren | status | schluessel | aufraeumen');
+        $sage('Befehle: migrieren | status | schluessel | aufraeumen | demo');
         exit($befehl === 'hilfe' ? 0 : 1);
 }

@@ -325,6 +325,9 @@ final class Kern
             'meldung_erfolg' => Sitzung::holeMeldung('erfolg'),
             'meldung_fehler' => Sitzung::holeMeldung('fehler') ?? self::hinweisAbgelaufen($_GET),
             'portal_adresse' => $this->portalAdresse(),
+            // Oeffentliche Demo: Hinweisband im Lehrerbereich. Die Beamer-
+            // und Elternansicht bleibt ohne, dort traegt niemand etwas ein.
+            'demo' => umgebung_schalter('SCHULOS_DEMO', false),
         ], $daten));
     }
 
